@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	
-	serv_sock=socket(PF_INET, SOCK_STREAM, 0);
+	serv_sock=socket(PF_INET, SOCK_STREAM, IPPROTO_TCP); //IPv4协议族中面向连接的套接字
 	if(serv_sock == -1)
 		error_handling("socket() error");
 	
@@ -44,7 +44,10 @@ int main(int argc, char *argv[])
 	if(clnt_sock==-1)
 		error_handling("accept() error");  
 	
-	write(clnt_sock, message, sizeof(message));
+	for (int i = 0; i < 5; i++) { // 传输数据的次数可以自行调整
+		write(clnt_sock, message, sizeof(message));
+	}
+	// write(clnt_sock, message, sizeof(message));
 	close(clnt_sock);
 	close(serv_sock);
 	return 0;
