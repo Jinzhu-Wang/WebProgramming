@@ -48,9 +48,8 @@ int main(int argc, char *argv[])
 		else
 			printf("Connected client %d \n", i+1);
 	
-		while((str_len=read(clnt_sock, message, BUF_SIZE))!=0) //read的返回值>0：成功读取的字节数；=0：读取完毕；<0：出错
+		while((str_len=read(clnt_sock, message, BUF_SIZE))!=0)
 			write(clnt_sock, message, str_len);
-			printf("Message from client: %s", message);
 
 		close(clnt_sock);
 	}
