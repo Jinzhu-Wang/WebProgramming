@@ -7,15 +7,14 @@
 
 #define BUF_SIZE 1024
 
-int calculate(int opnum, int* opnds, char oprator);
-
 void error_handing(char* message){
     fputs(message,stderr);
-    fputc('/n',stderr);
+    fputc('\n',stderr);
     exit(1);
 }
 
-int main(int argc , char*argv){
+int main(int argc , char *argv[]){
+    int calculate(int opnum, int* opnds, char oprator);
 	if(argc!=2) {
 		printf("Usage : %s <port>\n", argv[0]);
 		exit(1);
@@ -28,7 +27,7 @@ int main(int argc , char*argv){
     char message[BUF_SIZE];
 
 
-    serv_sock = socket(PF_INET,STOCK_STREAM,0);
+    serv_sock = socket(PF_INET,SOCK_STREAM,0);
     if(serv_sock==-1)
         error_handing("serv_sock error");
 
@@ -42,16 +41,18 @@ int main(int argc , char*argv){
 
     if(listen(serv_sock,5)==-1)
         error_handing("listen error");
-
-    for(int i =0;i<5;i++){
-        clnt_sock = accept(serv_sock,(struct sockaddr*)& clnt_addr, sizeof(clnt_addr))
+    socklen_t clnt_len =sizeof(clnt_addr);
+    while(1){
+        clnt_sock = accept(serv_sock,(struct sockaddr*)& clnt_addr, &clnt_len);
         if(clnt_sock==-1)
             error_handing("clnt_sock error");
         else
-            printf("Connected client %d \n", i+1);
+            puts("Connected client");
 
         int count_num=0;
         read(clnt_sock,&count_num,1); //read第二个参数是地址
+        if(count_num==0)
+            break;
         recv_len =0;
         while((count_num*4+1)>recv_len){
             str_len = read(clnt_sock,message,BUF_SIZE-1);
@@ -59,7 +60,7 @@ int main(int argc , char*argv){
         }
 
         int result = calculate(count_num,(int*) message,message[recv_len-1]);
-        write(cln_sock,&result,sizeof(result));
+        write(clnt_sock,&result,sizeof(result));
 
         close(clnt_sock);
     }
@@ -67,7 +68,7 @@ int main(int argc , char*argv){
     return 0;    
 }
 
-int calculate(int count_num;int* operands; char oper){
+int calculate(int count_num,int* operands, char oper){
     int result=operands[0];
     switch(oper){
         case '+':

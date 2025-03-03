@@ -38,6 +38,16 @@ int main(int argc, char *argv[])
 		clnt_adr_sz=sizeof(clnt_adr);
 		str_len=recvfrom(serv_sock, message, BUF_SIZE, 0, 
 								(struct sockaddr*)&clnt_adr, &clnt_adr_sz);
+		if(str_len==2 && (!memcmp(message,"q\n",2) || !memcmp(message,"Q\n",2))){
+			printf("exit \n");
+			break;
+		}
+		//变成字符串比较
+		// message[str_len]='\0';
+		// if(str_len==2 && (!strcmp(message,"q\n") || !strcmp(message,"Q\n"))){
+		// 	printf("exit \n");
+		// 	break;
+		// }
 		sendto(serv_sock, message, str_len, 0, 
 								(struct sockaddr*)&clnt_adr, clnt_adr_sz);
 	}	
