@@ -99,7 +99,7 @@ void read_childproc(int sig)
 }
 void error_handling(char *message)
 {
-	fputs(buf, stderr);
+	fputs(message, stderr);
 	fputc('\n', stderr);
 	exit(1);
 }

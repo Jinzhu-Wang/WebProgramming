@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 	pid=fork();
 	if(pid==0)
 	{
-		puts("Hi! I'm child process");
+		puts("Hi! I'm child process 1");
 		sleep(10);
 		return 12;
 	}
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 		pid=fork();
 		if(pid==0)
 		{
-			puts("Hi! I'm child process");
+			puts("Hi! I'm child process 2");
 			sleep(10);
 			exit(24);
 		}
