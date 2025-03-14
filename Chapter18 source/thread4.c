@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <windows.h>
-#include <process.h>
+#include <pthread.h>
+#include <unistd.h>
 #define NUM_THREAD	100
 
 void * thread_inc(void * arg);
@@ -9,10 +9,11 @@ long long num=0;
 
 int main(int argc, char *argv[]) 
 {
-	HANDLE thread_id[NUM_THREAD];
+	pthread_t thread_id[NUM_THREAD];
 	int i;
 
-	printf("sizeof long long: %d \n", sizeof(long long));
+	// printf("sizeof long long: %d \n", sizeof(long long));
+	printf("sizeof long long: %zu \n", sizeof(long long)); // %zu is used for size_t
 	for(i=0; i<NUM_THREAD; i++)
 	{
 		if(i%2)

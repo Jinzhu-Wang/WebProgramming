@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 void* thread_main(void *arg);
 
 int main(int argc, char *argv[]) 
@@ -12,7 +13,8 @@ int main(int argc, char *argv[])
 		puts("pthread_create() error");
 		return -1;
 	}; 	
-	sleep(10);  puts("end of main");
+	sleep(10);
+	puts("end of main");
 	return 0;
 }
 

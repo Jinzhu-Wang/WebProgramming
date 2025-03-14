@@ -45,12 +45,10 @@ void * thread_inc(void * arg)
 void * thread_des(void * arg)
 {
 	int i;
+	pthread_mutex_lock(&mutex);
 	for(i=0; i<50000000; i++)
-	{
-		pthread_mutex_lock(&mutex);
 		num-=1;
-		pthread_mutex_unlock(&mutex);
-	}
+	pthread_mutex_unlock(&mutex);
 	return NULL;
 }
 
