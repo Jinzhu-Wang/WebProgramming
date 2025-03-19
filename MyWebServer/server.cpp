@@ -8,6 +8,7 @@
 #include "Epoll.h"
 #include "InetAddress.h"
 #include "Socket.h"
+#include "Channel.h"
 
 #define MAX_EVENTS 1024
 #define READ_BUFFER 1024
@@ -28,23 +29,24 @@ int main(int argc, char* argv[]){
     int serv_sockfd = serv_sock->getfd();
 
     Epoll *ep = new Epoll();
-    ep->addFd(serv_sockfd,EPOLLIN);
-
+    Channel* serv_channel = new Channel(ep,serv_sockfd);
+    serv_channel->enable_reading();
 
     while(1){
-        std::vector<epoll_event> events = ep->poll(-1);
-        int nfds = events.size();
+        std::vector<Channel*> active_channels = ep->poll(-1);
+        int nfds = active_channels.size();
         
         for(int i =0;i<nfds;i++){
-            if(events[i].data.fd==serv_sockfd){ //新客户端链接
+            int chfd = active_channels[i]->get_fd();
+            if(chfd==serv_sockfd){ //新客户端链接
                 InetAddress *clnt_addr = new InetAddress();
                 Socket *clnt_sock = new Socket(serv_sock->accept(clnt_addr)); 
                 printf("new client fd %d! IP: %s Port: %d\n", clnt_sock->getfd(), inet_ntoa(clnt_addr->addr.sin_addr), ntohs(clnt_addr->addr.sin_port));
                 clnt_sock->set_nonblocking();
                 ep->addFd(clnt_sock->getfd(), EPOLLIN | EPOLLET);
                 
-            } else if(events[i].events & EPOLLIN){ //检查 EPOLLIN 位是否为 1无论其他位如何。更灵活，适合多事件组合。
-                handleReadEvent(events[i].data.fd);
+            } else if(active_channels[i]->get_revents() & EPOLLIN){ //检查 EPOLLIN 位是否为 1无论其他位如何。更灵活，适合多事件组合。
+                handleReadEvent(chfd);
             
             } else{
                 printf("something else happened\n");
