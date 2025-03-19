@@ -43,7 +43,8 @@ int main(int argc, char* argv[]){
                 Socket *clnt_sock = new Socket(serv_sock->accept(clnt_addr)); 
                 printf("new client fd %d! IP: %s Port: %d\n", clnt_sock->getfd(), inet_ntoa(clnt_addr->addr.sin_addr), ntohs(clnt_addr->addr.sin_port));
                 clnt_sock->set_nonblocking();
-                ep->addFd(clnt_sock->getfd(), EPOLLIN | EPOLLET);
+                Channel *clntChannel = new Channel(ep, clnt_sock->getfd());
+                clntChannel->enable_reading();                
                 
             } else if(active_channels[i]->get_revents() & EPOLLIN){ //检查 EPOLLIN 位是否为 1无论其他位如何。更灵活，适合多事件组合。
                 handleReadEvent(chfd);
