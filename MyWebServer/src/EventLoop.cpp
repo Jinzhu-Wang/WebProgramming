@@ -12,7 +12,7 @@ EventLoop::~EventLoop(){
 }
 
 void EventLoop::loop(){
-    while (true){
+    while (!quit_){
         std::vector<Channel*> active_channels;
         active_channels = ep_->poll();
         for(auto it = active_channels.begin(); it!=active_channels.end();++it){

@@ -29,7 +29,7 @@ void Acceptor::accept_connection(){
     Socket *clnt_sock = new Socket(serv_sock->accept(clnt_addr)); 
     printf("new client fd %d! IP: %s Port: %d\n", clnt_sock->getfd(), inet_ntoa(clnt_addr->addr.sin_addr), ntohs(clnt_addr->addr.sin_port));
     clnt_sock->set_nonblocking();
-    new_connection_callback_(serv_sock);
+    new_connection_callback_(clnt_sock);
     delete clnt_addr;
 }
 

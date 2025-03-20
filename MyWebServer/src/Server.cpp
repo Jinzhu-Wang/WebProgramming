@@ -20,11 +20,11 @@ Server::Server(EventLoop* loop,char* port): loop_(loop),acceptor_(nullptr){
 
 
 
-void Server::new_connection(Socket* serv_sock){
-    Connection* conn = new Connection(loop_, serv_sock);
+void Server::new_connection(Socket* clnt_sock){
+    Connection* conn = new Connection(loop_, clnt_sock);
     std::function<void(Socket*)> cb = std::bind(&Server::delete_connection, this, std::placeholders::_1);
     conn->set_delete_connection_callback(cb);
-    connections[serv_sock->getfd()] = conn;
+    connections[clnt_sock->getfd()] = conn;
 }
 
 void Server::delete_connection(Socket * sock){
