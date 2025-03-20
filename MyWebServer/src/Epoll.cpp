@@ -11,12 +11,12 @@ Epoll::Epoll():epfd(-1){
     events = new epoll_event[MAXEVENTS];
 }
 
-void Epoll::addFd(int fd, uint32_t op){
-    struct epoll_event ev;
-    ev.events = op;
-    ev.data.fd=fd;
-    errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add event error");
-}
+// void Epoll::addFd(int fd, uint32_t op){
+//     struct epoll_event ev;
+//     ev.events = op;
+//     ev.data.fd=fd;
+//     errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add event error");
+// }
 
 std::vector<Channel*> Epoll::poll(int timeout){
     std::vector<Channel*> activeChannels;
