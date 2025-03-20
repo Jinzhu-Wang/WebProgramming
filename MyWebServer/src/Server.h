@@ -3,10 +3,12 @@
 
 
 class EventLoop;
+class Acceptor;
 class Socket;
 class Server{
 private:
     EventLoop* loop_;
+    Acceptor* acceptor_;
 
 public:
     Server(EventLoop* loop,char*);
