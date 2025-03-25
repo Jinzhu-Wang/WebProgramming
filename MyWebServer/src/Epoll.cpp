@@ -11,20 +11,13 @@ Epoll::Epoll():epfd(-1){
     events = new epoll_event[MAXEVENTS];
 }
 
-// void Epoll::addFd(int fd, uint32_t op){
-//     struct epoll_event ev;
-//     ev.events = op;
-//     ev.data.fd=fd;
-//     errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add event error");
-// }
-
 std::vector<Channel*> Epoll::poll(int timeout){
     std::vector<Channel*> activeChannels;
     int nfds = epoll_wait(epfd, events, MAXEVENTS,timeout);
     errif(nfds == -1, "epoll wait error");
     for(int i = 0; i < nfds; ++i){
         Channel *ch = (Channel*)events[i].data.ptr;
-        ch->set_revents(events[i].events);
+        ch->set_ready(events[i].events);
         activeChannels.push_back(ch);
     }
     return activeChannels;
@@ -38,7 +31,7 @@ void Epoll::update_channel(Channel *channel){
     ev.events = channel->get_events();
     if(!inepoll){
         errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
-        channel->set_inepoll();
+        channel->set_inepoll(true);
     } else{
         errif(epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1, "epoll modify error");
     }
@@ -50,4 +43,10 @@ Epoll::~Epoll(){
         epfd = -1;
     }
     delete [] events;
+}
+
+void Epoll::delete_channel(Channel *channel){
+    int fd = channel->get_fd();
+    errif(epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL) == -1, "epoll delete error");
+    channel->set_inepoll(false);
 }

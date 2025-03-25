@@ -22,6 +22,7 @@ public:
 
     void echo(int sockfd);
     void set_delete_connection_callback(std::function<void(Socket*)>);
+    void send(int);
 };
 
 

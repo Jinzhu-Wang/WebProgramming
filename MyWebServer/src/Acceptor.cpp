@@ -10,12 +10,13 @@ Acceptor::Acceptor(EventLoop* loop, char* port):loop_(loop){
 
     serv_sock->bind(serv_addr);
     serv_sock->listen();
-    serv_sock->set_nonblocking();
+    // serv_sock->set_nonblocking();
 
     serv_channel = new Channel(loop_,serv_sock->getfd());
-    serv_channel->enable_reading();
     std::function<void()> cb = std::bind(&Acceptor::accept_connection,this);
-    serv_channel->set_callback(cb);
+    serv_channel->set_read_callback(cb);
+    serv_channel->enable_reading();
+    serv_channel->set_use_thread_pool(false);
 }
 
 Acceptor::~Acceptor(){
@@ -27,7 +28,7 @@ Acceptor::~Acceptor(){
 void Acceptor::accept_connection(){
     InetAddress *clnt_addr = new InetAddress();
     Socket *clnt_sock = new Socket(serv_sock->accept(clnt_addr)); 
-    printf("new client fd %d! IP: %s Port: %d\n", clnt_sock->getfd(), inet_ntoa(clnt_addr->addr.sin_addr), ntohs(clnt_addr->addr.sin_port));
+    printf("new client fd %d! IP: %s Port: %d\n", clnt_sock->getfd(), inet_ntoa(clnt_addr->get_addr().sin_addr), ntohs(clnt_addr->get_addr().sin_port));
     clnt_sock->set_nonblocking();
     new_connection_callback_(clnt_sock);
     delete clnt_addr;

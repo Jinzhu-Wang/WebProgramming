@@ -10,9 +10,10 @@ public:
     Socket();
     Socket(int fd);
 
-    void bind(const InetAddress* inet_addr);
+    void bind(InetAddress* inet_addr);
     void listen();
-    int accept(const InetAddress* inet_addr);
+    int accept(InetAddress* inet_addr);
+    void connect(InetAddress *_addr);
     void set_nonblocking();
     int getfd();
     ~Socket();

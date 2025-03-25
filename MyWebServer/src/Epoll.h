@@ -14,6 +14,7 @@ public:
 
     void addFd(int fd, uint32_t op);
     void update_channel(Channel *);
+    void delete_channel(Channel *channel);
 
     std::vector<Channel*> poll(int timeout = -1);
     // std::vector<epoll_event> poll(int timeout = -1);

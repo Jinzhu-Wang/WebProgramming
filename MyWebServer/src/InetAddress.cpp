@@ -22,6 +22,14 @@ InetAddress::InetAddress(const char* ip, const char* port): addr_len(sizeof(addr
     addr.sin_port = htons(atoi(port));
 }
 
+void InetAddress::set_inetaddr(sockaddr_in _addr){
+    addr = _addr;
+}
+
+sockaddr_in InetAddress::get_addr() {
+    return addr;
+}
+
 InetAddress::~InetAddress(){
     
 }
