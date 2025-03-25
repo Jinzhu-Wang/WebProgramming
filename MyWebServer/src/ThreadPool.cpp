@@ -28,7 +28,7 @@ ThreadPool::~ThreadPool(){
     cv_.notify_all();
     for(std::thread& th : threads_){
         if(th.joinable()){
-            th.join();
+            th.join(); //调用 join() 的线程会阻塞，直到目标线程（即 std::thread 对象表示的线程）执行完毕。
         }
     }
 }

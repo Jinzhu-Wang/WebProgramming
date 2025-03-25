@@ -32,8 +32,8 @@ auto ThreadPool::add(F&& f, Args&&... args) -> std::future<typename std::result_
     using return_type = typename std::result_of<F(Args...)>::type;
 
     auto task = std::make_shared<std::packaged_task<return_type()>>(
-        std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-    );
+        std::bind(std::forward<F>(f), std::forward<Args>(args)...) //对参数包 args 展开并逐个应用 std::forward，保留每个参数的值类别。
+    );  //std::make_shared<T>(args...) 创建一个类型为 T 的对象，并返回一个 std::shared_ptr<T> 管理它。
 
     std::future<return_type> res = task->get_future(); //返回一个 std::future，与该任务的结果绑定。
     {
