@@ -32,7 +32,7 @@ public:
     void set_ready(uint32_t);
     // void set_revents(uint32_t); //channel要求epoll监听的事情可能不止一件，epoll通过这个函数返回给主程序具体是什么事发生
     void set_read_callback(std::function<void()>);
-    void set_use_thread_pool(bool use = true);
+    // void set_use_thread_pool(bool use = true);
 
 };
 

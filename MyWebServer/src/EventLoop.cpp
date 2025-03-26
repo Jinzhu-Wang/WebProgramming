@@ -4,13 +4,11 @@
 #include "ThreadPool.h"
 #include <vector>
 
-EventLoop::EventLoop():ep_(nullptr), thread_pool_(nullptr), quit_(false){
+EventLoop::EventLoop():ep_(nullptr), quit_(false){
     ep_ = new Epoll();
-    thread_pool_=new ThreadPool();
 }
 
 EventLoop::~EventLoop(){
-    delete thread_pool_;
     delete ep_;
 }
 
@@ -26,8 +24,4 @@ void EventLoop::loop(){
 
 void EventLoop::update_channel(Channel *ch){
     ep_->update_channel(ch);
-}
-
-void EventLoop::add_thread(std::function<void()> func){
-    thread_pool_->add(func);
 }

@@ -12,8 +12,7 @@ private:
     EventLoop* loop_;
     Socket* sock_;
     Channel* channel_;
-    std::function<void(Socket*)> delete_connection_callback;
-    std::string *in_buffer_;
+    std::function<void(int)> delete_connection_callback;
     Buffer* read_buffer_;
 
 public:
@@ -21,7 +20,7 @@ public:
     ~Connection();
 
     void echo(int sockfd);
-    void set_delete_connection_callback(std::function<void(Socket*)>);
+    void set_delete_connection_callback(std::function<void(int)>);
     void send(int);
 };
 

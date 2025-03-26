@@ -12,18 +12,10 @@ Channel::~Channel(){
 
 void Channel::handle_event(){
     if(ready_ & (EPOLLIN | EPOLLPRI)){
-        if(use_thread_pool_){
-            loop_->add_thread(read_callback_);
-        } else{
-            read_callback_();
-        }
+        read_callback_();
     }
     if(ready_ & (EPOLLOUT)){
-        if(use_thread_pool_){
-            loop_->add_thread(write_callback_);
-        } else{
-            write_callback_();
-        }
+         write_callback_();
     }
 }
 
@@ -66,8 +58,6 @@ void Channel::set_read_callback(std::function<void()> cb){
     read_callback_ = cb;
 }
 
-void Channel::set_use_thread_pool(bool use){
-    use_thread_pool_ = use;
-}
+
 
 
