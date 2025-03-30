@@ -2,6 +2,7 @@
 #define SERVER_H
 #include <map>
 #include <vector>
+#include <functional>
 
 class EventLoop;
 class Socket;
@@ -15,15 +16,16 @@ private:
     Acceptor* acceptor_;
     std::map<int, Connection*> connections_;
     std::vector<EventLoop*> sub_reactors_;
-    ThreadPool* thpool_;
+    ThreadPool* thread_pool_;
+    std::function<void(Connection*)> on_connect_callback_;
 
 public:
     Server(EventLoop* loop,char*);
     ~Server();
     
-    void handle_read_event(int);
-    void new_connection(Socket* serv_sock);
-    void delete_connection(int);
+    void NewConnection(Socket* serv_sock);
+    void DeleteConnection(Socket*);
+    void OnConnect(std::function<void(Connection*)> fn);
 };
 
 

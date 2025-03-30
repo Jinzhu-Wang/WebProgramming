@@ -1,27 +1,59 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 #include <functional>
-#include <string>
 
 class EventLoop;
 class Socket;
 class Channel;
 class Buffer;
+
+enum class State {
+    Invalid = 1,
+    Handshaking,
+    Connected,
+    Closed,
+    Failed,
+};
+
 class Connection{
 private:
     EventLoop* loop_;
     Socket* sock_;
-    Channel* channel_;
-    std::function<void(int)> delete_connection_callback;
-    Buffer* read_buffer_;
+    Channel* channel_{nullptr};
+    State state_{State::Invalid};
+    Buffer* read_buffer_{nullptr};
+    Buffer* send_buffer_{nullptr};
+
+    std::function<void(Socket*)> delete_connection_callback_;
+    std::function<void(Connection *)> on_connect_callback_;
+
+    void ReadNonBlocking();
+    void WriteNonBlocking();
+    void ReadBlocking();
+    void WriteBlocking();
 
 public:
+
     Connection(EventLoop* loop, Socket* sock);
     ~Connection();
 
-    void echo(int sockfd);
-    void set_delete_connection_callback(std::function<void(int)>);
-    void send(int);
+    void Read();
+    void Write();
+
+    void SetDeleteConnectionCallback(std::function<void(Socket*)> const &callback); //修饰callback，表示函数不能改变callback本身的值。
+    void SetOnConnectCallback(std::function<void(Connection*)> const &callback); 
+    State GetState();
+    void Close();
+    void SetSendBuffer(const char* str);
+    Buffer* GetReadBuffer();
+    const char* ReadBuffer();
+    Buffer* GetSendBuffer();
+    const char* SendBuffer();
+    void GetlineSendBuffer();
+    Socket* GetSocket();
+
+    void OnConnect(std::function<void()>fn);
+    
 };
 
 

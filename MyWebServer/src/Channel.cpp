@@ -2,7 +2,7 @@
 #include "EventLoop.h"
 #include <unistd.h>
 
-Channel::Channel(EventLoop* loop,int fd): loop_(loop), fd_(fd), events_(0), ready_(0), inepoll_(false), use_thread_pool_(true){}
+Channel::Channel(EventLoop* loop,int fd): loop_(loop), fd_(fd), events_(0), ready_(0), inepoll_(false){}
 Channel::~Channel(){
     if(fd_ != -1){
         close(fd_);

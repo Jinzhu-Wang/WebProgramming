@@ -11,7 +11,6 @@ private:
     uint32_t events_;
     uint32_t ready_;
     bool inepoll_;
-    bool use_thread_pool_;
     std::function<void()> read_callback_;
     std::function<void()> write_callback_;
 

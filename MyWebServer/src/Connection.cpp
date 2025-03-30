@@ -3,31 +3,49 @@
 #include "Channel.h"
 #include "util.h"
 #include "Buffer.h"
+#include <assert.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
 #define READ_BUFFER 1024
 
-Connection::Connection(EventLoop* loop, Socket* sock):loop_(loop), sock_(sock),channel_(nullptr), read_buffer_(nullptr){
-    channel_ = new Channel(loop_,sock_->getfd());
-    channel_->enable_reading();
-    channel_->use_ET();
-
-    std::function<void()> cb = std::bind(&Connection::echo,this,sock_->getfd());
-    channel_->set_read_callback(cb);
+Connection::Connection(EventLoop* loop, Socket* sock):loop_(loop), sock_(sock){
+    if(loop_!=nullptr){
+        channel_ = new Channel(loop_,sock_->getfd()); 
+        channel_->enable_reading();
+        channel_->use_ET();
+    }
     read_buffer_ = new Buffer();
+    send_buffer_ = new Buffer();
+    state_ = State::Connected;
 }
 
 Connection::~Connection(){
-    delete channel_;
+    if(loop_!=nullptr){
+        delete channel_;
+    }
     delete sock_;
     delete read_buffer_;
+    delete send_buffer_;
 }
 
-void Connection::echo(int sockfd){
+void Connection::Read(){
+    assert(state_ == State::Connected); //验证是否为connect状态
+    read_buffer_->clear();
+    ReadNonBlocking();
+}
+
+void Connection::Write(){
+    assert(state_ == State::Connected);
+    WriteNonBlocking();
+    send_buffer_->clear();
+}
+
+void Connection::ReadNonBlocking(){
+    int sockfd = sock_->getfd();
     char buf[READ_BUFFER];
-    while(1){
+    while(1){ // 使用非阻塞IO，读取客户端buffer，一次读取buf大小数据，直到全部读取完毕
         int str_len = read(sockfd,buf,READ_BUFFER-1);
         if(str_len > 0){
             buf[str_len] = '\0';
@@ -36,41 +54,66 @@ void Connection::echo(int sockfd){
             printf("continue reading");
             continue;
         } else if(str_len==-1 && ((errno==EAGAIN) || (errno == EWOULDBLOCK))){ //非阻塞IO，这个条件表示数据全部读取完毕
-            // printf("finish reading once, errno: %d\n", errno);
             printf("message from client fd %d: %s\n", sockfd, read_buffer_->c_str());
-            // errif(write(sockfd, read_buffer_->c_str(), read_buffer_->size()) == -1, "socket write error");
-            send(sockfd);
-            read_buffer_->clear();
             break;
         } else if(str_len==0){ //EOF，客户端断开连接 str_len==0
             printf("EOF, client fd %d disconnected\n", sockfd);
-            //close(sockfd); //关闭socket会自动将文件描述符从epoll树上移除
-            delete_connection_callback(sockfd);
+            state_ = State::Closed;
             break;
         } else{
-            printf("Connection reset by peer\n");
-            delete_connection_callback(sockfd);
+            printf("Other error on client fd %d\n", sockfd);
             break;
         }
     }
-
 }
 
-void Connection::set_delete_connection_callback(std::function<void(int)> cb){
-    delete_connection_callback = cb;
-}
+void Connection::WriteNonBlocking(){
+    int sockfd = sock_->getfd();
+    const char* buf = send_buffer_->c_str();
+    int data_size = send_buffer_->size();
+    int data_left = data_size;
 
-void Connection::send(int sockfd){
-    char buf[read_buffer_->size()];
-    strcpy(buf, read_buffer_->c_str());
-    int  data_size = read_buffer_->size(); 
-    int data_left = data_size; 
-    while (data_left > 0) 
-    { 
-        ssize_t bytes_write = write(sockfd, buf + data_size - data_left, data_left); 
-        if (bytes_write == -1 && errno == EAGAIN) { 
+    while(data_left >0){
+        ssize_t bytes_write = write(sockfd, buf+data_size-data_left, data_left);
+        if(bytes_write == -1 && errno == EINTR){
+            printf("continue writing\n");
+            continue;;
+        }
+        if(bytes_write == -1 &&errno ==EAGAIN){
             break;
         }
-        data_left -= bytes_write; 
+        if(bytes_write == -1){
+            printf("Other error on client fd %d\n", sockfd);
+            state_ = State::Closed;
+            break;
+        }
+        data_left -=bytes_write;
     }
 }
+
+void Connection::Close(){
+    delete_connection_callback_(sock_);
+}
+
+State Connection::GetState(){ return state_;}
+
+void Connection::SetSendBuffer(const char* str){ send_buffer_->set_buf(str);}
+
+Buffer* Connection::GetReadBuffer(){ return read_buffer_;}
+const char* Connection::ReadBuffer(){ return read_buffer_->c_str();}
+
+Buffer *Connection::GetSendBuffer() { return send_buffer_; }
+const char *Connection::SendBuffer() { return send_buffer_->c_str(); }
+
+void Connection::SetDeleteConnectionCallback(std::function<void(Socket*)> const &callback){
+    delete_connection_callback_ = callback;
+}
+
+void Connection::SetOnConnectCallback(std::function<void(Connection*)> const &callback){
+    on_connect_callback_ = callback;
+    channel_->set_read_callback([this](){on_connect_callback_(this);});
+}
+
+void Connection::GetlineSendBuffer(){send_buffer_ ->getline();}
+
+Socket* Connection::GetSocket(){return sock_;}
