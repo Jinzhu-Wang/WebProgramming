@@ -1,34 +1,38 @@
-#include "Epoll.h"
+#include "Epoller.h"
 #include "util.h"
 #include "Channel.h"
+
+#include <sys/epoll.h>
 #include <unistd.h>
+#include <string.h>
+#include <iostream>
 
 #define MAXEVENTS 1000
 
 Epoller::Epoller():epfd(-1){
     epfd = epoll_create1(0);
     errif(epfd==-1,"epoll create error");
-    events = new epoll_event[MAXEVENTS];
+    events_ = new epoll_event[MAXEVENTS];
 }
 
-std::vector<Channel*> Epoller::poll(int timeout){
-    std::vector<Channel*> activeChannels;
-    int nfds = epoll_wait(epfd, events, MAXEVENTS,timeout);
+std::vector<Channel*> Epoller::Poll(long timeout) const{
+    std::vector<Channel*> active_channels;
+    int nfds = epoll_wait(epfd, events_, MAXEVENTS,timeout);
     errif(nfds == -1, "epoll wait error");
     for(int i = 0; i < nfds; ++i){
-        Channel *ch = (Channel*)events[i].data.ptr;
-        ch->SetReadyEvents(events[i].events);
-        activeChannels.push_back(ch);
+        Channel *ch = (Channel*)events_[i].data.ptr;
+        ch->SetReadyEvents(events_[i].events);
+        active_channels.emplace_back(ch);
     }
-    return activeChannels;
+    return active_channels;
 }
 
-void Epoller::update_channel(Channel *channel){
+void Epoller::UpdateChannel(Channel *channel) const{
     int fd = channel->fd();
     bool inepoll = channel->IsInEpoll();
-    struct epoll_event ev;
+    struct epoll_event ev{}; //列表初始化,将 ev 的所有成员初始化为零值
     ev.data.ptr = channel; //用ptr=channel代替fd=fd;
-    ev.events = channel->get_events();
+    ev.events = channel->listen_events();
     if(!inepoll){
         errif(epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev) == -1, "epoll add error");
         channel->SetInEpoll(true);
@@ -39,13 +43,13 @@ void Epoller::update_channel(Channel *channel){
 
 Epoller::~Epoller(){
     if(epfd != -1){
-        close(epfd);
+        ::close(epfd);
         epfd = -1;
     }
-    delete [] events;
+    delete [] events_;
 }
 
-void Epoller::delete_channel(Channel *channel){
+void Epoller::DeleteChannel(Channel *channel) const{
     int fd = channel->fd();
     errif(epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL) == -1, "epoll delete error");
     channel->SetInEpoll(false);

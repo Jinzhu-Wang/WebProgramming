@@ -2,12 +2,12 @@
 #define EVENTLOOP_H
 
 #include <functional>
-class Epoll;
+class Epoller;
 class Channel;
 class ThreadPool;
 class EventLoop{
 private:
-    Epoll* ep_;
+    Epoller* ep_;
     bool quit_;
 
 public:

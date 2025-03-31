@@ -1,10 +1,9 @@
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
-#include "src/util.h"
-#include "src/Buffer.h"
-#include "src/InetAddress.h"
-#include "src/Socket.h"
+#include "tcp/util.h"
+#include "tcp/Buffer.h"
+#include "tcp/Acceptor.h"
 
 using namespace std;
 
@@ -31,7 +30,7 @@ int main(int argc,char* argv[]) {
             bzero(&buf, sizeof(buf));
             ssize_t read_bytes = read(sockfd, buf, sizeof(buf));
             if(read_bytes > 0){
-                readBuffer->append(buf, read_bytes);
+                readBuffer->Append(buf, read_bytes);
                 already_read += read_bytes;
             } else if(read_bytes == 0){         //EOF
                 printf("server disconnected!\n");
@@ -42,7 +41,7 @@ int main(int argc,char* argv[]) {
                 break;
             } 
         }
-        readBuffer->clear();
+        readBuffer->Clear();
     }
     delete addr;
     delete sock;

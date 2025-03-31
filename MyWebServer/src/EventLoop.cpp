@@ -5,7 +5,7 @@
 #include <vector>
 
 EventLoop::EventLoop():ep_(nullptr), quit_(false){
-    ep_ = new Epoll();
+    ep_ = new Epoller();
 }
 
 EventLoop::~EventLoop(){

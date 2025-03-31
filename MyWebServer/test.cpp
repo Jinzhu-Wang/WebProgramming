@@ -34,7 +34,7 @@ void oneClient(int msgs, int wait){
             bzero(&buf, sizeof(buf));
             ssize_t read_bytes = read(sockfd, buf, sizeof(buf));
             if(read_bytes > 0){
-                readBuffer->append(buf, read_bytes);
+                readBuffer->Append(buf, read_bytes);
                 already_read += read_bytes;
             } else if(read_bytes == 0){         //EOF
                 printf("server disconnected!\n");
@@ -45,7 +45,7 @@ void oneClient(int msgs, int wait){
                 break;
             } 
         }
-        readBuffer->clear();
+        readBuffer->Clear();
     }
     delete addr;
     delete sock;

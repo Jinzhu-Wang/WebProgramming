@@ -9,10 +9,10 @@
 int main(int argc,char*argv[]) {
     errif(argc!=2,"argc error");
     EventLoop *loop = new EventLoop();
-    Server *server = new Server(loop,argv[1]);
-    server->OnConnect([](Connection* conn){
+    TcpServer *server = new TcpServer(loop,argv[1]);
+    server->OnConnect([](TcpConnection* conn){
         conn->Read();
-        if(conn->GetState()==State::Closed){
+        if(conn->GetState()==ConnectionState::Closed){
             conn->Close();
             return;
         }

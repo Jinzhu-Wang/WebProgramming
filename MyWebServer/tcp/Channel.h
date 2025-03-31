@@ -1,0 +1,45 @@
+#ifndef CHANNEL_H
+#define CHANNEL_H
+#include "common.h"
+
+#include <functional>
+#include <memory>
+
+class EventLoop;
+class Channel{
+private:
+    EventLoop* loop_; 
+    int fd_;
+    short listen_events_;
+    short ready_events_;
+    bool in_epoll_;
+    std::function<void()> read_callback_;
+    std::function<void()> write_callback_;
+
+public:
+    DISALLOW_COPY_AND_MOVE(Channel);
+    Channel(int fd, EventLoop* loop);
+    ~Channel();
+
+
+    void HandleEvent() const; //处理事件
+    void EnableRead(); //允许读
+    void EnableWrite();
+    void EnableET();
+    void DisableWrite();
+    
+    int fd() const; // 获取fd
+    short listen_events() const; // 监听的事件
+    short ready_events() const; // 准备好的事件
+
+    bool IsInEpoll() const;
+    void SetInEpoll(bool in = true );
+    
+    
+    void SetReadyEvents(int ev);
+    void set_read_callback(std::function<void()>const &callback);
+    void set_write_callback(std::function<void()>const &callback);
+
+};
+
+#endif

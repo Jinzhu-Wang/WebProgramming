@@ -4,13 +4,13 @@
 #include <vector>
 
 class Channel;
-class Epoll{
+class Epoller{
 private:
     int epfd;
     struct epoll_event *events; //用来记录每次发生的事件
 public:
-    Epoll();
-    ~Epoll();
+    Epoller();
+    ~Epoller();
 
     void addFd(int fd, uint32_t op);
     void update_channel(Channel *);

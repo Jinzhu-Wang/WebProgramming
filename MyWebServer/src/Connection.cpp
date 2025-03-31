@@ -13,7 +13,7 @@
 Connection::Connection(EventLoop* loop, Socket* sock):loop_(loop), sock_(sock){
     if(loop_!=nullptr){
         channel_ = new Channel(loop_,sock_->getfd()); 
-        channel_->enable_reading();
+        channel_->EnableRead();
         channel_->use_ET();
     }
     read_buffer_ = new Buffer();
@@ -49,7 +49,7 @@ void Connection::ReadNonBlocking(){
         int str_len = read(sockfd,buf,READ_BUFFER-1);
         if(str_len > 0){
             buf[str_len] = '\0';
-            read_buffer_->append(buf,str_len);
+            read_buffer_->Append(buf,str_len);
         } else if(str_len==-1 && errno==EINTR){ //客户端正常中断，继续读取
             printf("continue reading");
             continue;

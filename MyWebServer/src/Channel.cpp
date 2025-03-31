@@ -2,7 +2,7 @@
 #include "EventLoop.h"
 #include <unistd.h>
 
-Channel::Channel(EventLoop* loop,int fd): loop_(loop), fd_(fd), events_(0), ready_(0), inepoll_(false){}
+Channel::Channel(EventLoop* loop,int fd): loop_(loop), fd_(fd), events_(0), ready_(0), in_epoll_(false){}
 Channel::~Channel(){
     if(fd_ != -1){
         close(fd_);
@@ -10,7 +10,7 @@ Channel::~Channel(){
     }
 }
 
-void Channel::handle_event(){
+void Channel::HandleEvent(){
     if(ready_ & (EPOLLIN | EPOLLPRI)){
         read_callback_();
     }
@@ -19,7 +19,7 @@ void Channel::handle_event(){
     }
 }
 
-void Channel::enable_reading(){
+void Channel::EnableRead(){
     events_ |= EPOLLIN | EPOLLET;
     loop_->update_channel(this);
 }
@@ -29,7 +29,7 @@ void Channel::use_ET(){
     loop_->update_channel(this);
 }
 
-int Channel::get_fd(){
+int Channel::fd(){
     return fd_;
 }
 
@@ -41,16 +41,16 @@ uint32_t Channel::get_ready(){
     return ready_;
 }
 
-bool Channel::get_inepoll(){
-    return inepoll_;
+bool Channel::IsInEpoll(){
+    return in_epoll_;
 }
 
-void Channel::set_inepoll(bool inpoll){
-    inepoll_ = inpoll;
+void Channel::SetInEpoll(bool inpoll){
+    in_epoll_ = inpoll;
 
 }
 
-void Channel::set_ready(uint32_t ev){
+void Channel::SetReadyEvents(uint32_t ev){
     ready_ = ev;
 }
 

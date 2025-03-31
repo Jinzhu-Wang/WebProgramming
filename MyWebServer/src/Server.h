@@ -10,7 +10,7 @@ class Acceptor;
 class Connection;
 class ThreadPool;
 
-class Server{
+class TcpServer{
 private:
     EventLoop* main_reactor_;   
     Acceptor* acceptor_;
@@ -20,8 +20,8 @@ private:
     std::function<void(Connection*)> on_connect_callback_;
 
 public:
-    Server(EventLoop* loop,char*);
-    ~Server();
+    TcpServer(EventLoop* loop,char*);
+    ~TcpServer();
     
     void NewConnection(Socket* serv_sock);
     void DeleteConnection(Socket*);
