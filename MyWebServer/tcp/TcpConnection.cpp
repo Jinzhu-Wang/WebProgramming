@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <iostream>
 #include <sys/socket.h>
+#include <string.h>
 
 TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):loop_(loop), connfd_(connfd), connid_(connid){
     if(loop_!=nullptr){
@@ -37,7 +38,7 @@ void TcpConnection::set_message_callback(std::function<void(TcpConnection*)> con
 
 void TcpConnection::HandleMessage(){
     Read();
-    if(on_message_){ on_message_(this);}
+    if(read_buf_->Size() > 0 && on_message_){ on_message_(this);}// 只有缓冲区有数据时才调用回调
 }
 
 void TcpConnection::HandleClose(){
@@ -79,9 +80,9 @@ void TcpConnection::Write(){
 void TcpConnection::ReadNonBlocking(){
     char buf[1024];
     while(1){ // 使用非阻塞IO，读取客户端buffer，一次读取buf大小数据，直到全部读取完毕
+        memset(buf, 0, sizeof(buf));
         int str_len = read(connfd_,buf,sizeof(buf)-1);
         if(str_len > 0){
-            buf[str_len] = '\0';
             read_buf_->Append(buf,str_len);
         } else if(str_len==-1 && errno==EINTR){ //客户端正常中断，继续读取
             printf("continue reading");
@@ -102,7 +103,8 @@ void TcpConnection::ReadNonBlocking(){
 }
 
 void TcpConnection::WriteNonBlocking(){
-    const char* buf = send_buf_->c_str();
+    char buf[send_buf_->Size()];
+    memcpy(buf, send_buf_->c_str(), send_buf_->Size());
     int data_size = send_buf_->Size();
     int data_left = data_size;
 
@@ -110,7 +112,7 @@ void TcpConnection::WriteNonBlocking(){
         ssize_t bytes_write = write(connfd_, buf+data_size-data_left, data_left);
         if(bytes_write == -1 && errno == EINTR){
             printf("continue writing\n");
-            continue;;
+            continue;
         }
         if(bytes_write == -1 &&errno ==EAGAIN){
             break;
