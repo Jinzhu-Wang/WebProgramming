@@ -87,7 +87,7 @@ void TcpConnection::Send(const  char* msg){
 }
 
 void TcpConnection::Read(){
-    assert(state_ == ConnectionState::Connected); //验证是否为connect状态
+    if(state_ != ConnectionState::Connected){return;} //验证是否为connect状态
     read_buf_->Clear();
     ReadNonBlocking();
 }
