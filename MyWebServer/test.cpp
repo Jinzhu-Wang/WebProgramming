@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     ThreadPool *poll = new ThreadPool(threads);
     std::function<void()> func = std::bind(oneClient, msgs, wait);
     for(int i = 0; i < threads; ++i){
-        poll->add(func);
+        poll->Add(func);
     }
     delete poll;
     return 0;

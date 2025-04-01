@@ -23,12 +23,12 @@ public:
 
     // void add(std::function<void()>);
     template<class F, class... Args>
-    auto add(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>; //将推导出的返回类型包装成一个 std::future 对象，表示异步操作的结果。
+    auto Add(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>; //将推导出的返回类型包装成一个 std::future 对象，表示异步操作的结果。
     //上面必须用typename,因为std::result_of<F(Args...)>::type是依赖于模板参数的类型，编译器需要 typename 来明确这是一个类型名。
 };
 
 template<class F, class... Args>
-auto ThreadPool::add(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>{
+auto ThreadPool::Add(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>{
     using return_type = typename std::result_of<F(Args...)>::type;
 
     auto task = std::make_shared<std::packaged_task<return_type()>>(

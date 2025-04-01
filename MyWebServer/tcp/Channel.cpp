@@ -15,15 +15,26 @@ Channel::~Channel(){
 }
 
 void Channel::HandleEvent() const{
-    if(ready_events_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)){
-        if(read_callback_){
-            read_callback_();
-        }
+    if(tied_){
+        std::shared_ptr<void> guard = tie_.lock();
+        HandleEventWithGuard();
+    } else{
+        HandleEventWithGuard();
     }
-    if(ready_events_ & (EPOLLOUT)){
-        if(write_callback_){
-            write_callback_();
-        }
+}
+
+void Channel::Tie(const std::shared_ptr<void> &ptr){
+    tied_ = true;
+    tie_ = ptr;
+}
+
+void Channel::HandleEventWithGuard() const{
+    if (ready_events_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
+        if (read_callback_) { read_callback_();}
+    } 
+
+    if (ready_events_ & EPOLLOUT) {
+        if (write_callback_) { write_callback_();}
     }
 }
 

@@ -21,30 +21,50 @@ TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):loop_(loop
     }
     read_buf_ = std::make_unique<Buffer>();
     send_buf_ = std::make_unique<Buffer>();
-    state_ = ConnectionState::Connected;
 }
 
 TcpConnection::~TcpConnection(){
     ::close(connfd_);
 }
 
-void TcpConnection::set_close_callback(std::function<void(int)> const &callback){
+void TcpConnection::ConnectionEstablished(){
+    state_ = ConnectionState::Connected;
+    channel_->Tie(shared_from_this());
+    // channel_->EnableRead();
+    loop_->UpdateChannel(channel_.get());
+    if(on_connect_){
+        on_connect_(shared_from_this());
+    }
+}
+
+void TcpConnection::ConnectionDestructor(){
+    //std::cout << CurrentThread::tid() << " TcpConnection::ConnectionDestructor" << std::endl;
+    // 将该操作从析构处，移植该处，增加性能，因为在析构前，当前`TcpConnection`已经相当于关闭了。
+    // 已经可以将其从loop处离开。
+    loop_->DeleteChannel(channel_.get());
+}
+
+void TcpConnection::set_connection_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &callback){
+    on_connect_ = std::move(callback);
+}
+
+void TcpConnection::set_close_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &callback){
     on_close_ = std::move(callback);
 }
 
-void TcpConnection::set_message_callback(std::function<void(TcpConnection*)> const &callback){
+void TcpConnection::set_message_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &callback){
     on_message_ = std::move(callback);
 }
 
 void TcpConnection::HandleMessage(){
     Read();
-    if(read_buf_->Size() > 0 && on_message_){ on_message_(this);}// 只有缓冲区有数据时才调用回调
+    if(on_message_){ on_message_(shared_from_this());}// 只有缓冲区有数据时才调用回调
 }
 
 void TcpConnection::HandleClose(){
     if(state_!= ConnectionState::Disconnected){
         state_ = ConnectionState::Disconnected;
-        if(on_close_){ on_close_(connfd_);}
+        if(on_close_){ on_close_(shared_from_this());}
     }
 }
 
@@ -73,6 +93,7 @@ void TcpConnection::Read(){
 }
 
 void TcpConnection::Write(){
+    assert(state_ == ConnectionState::Connected);
     WriteNonBlocking();
     send_buf_->Clear();
 }

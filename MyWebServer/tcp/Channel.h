@@ -10,11 +10,15 @@ class Channel{
 private:
     EventLoop* loop_; 
     int fd_;
+
     short listen_events_;
     short ready_events_;
     bool in_epoll_;
     std::function<void()> read_callback_;
     std::function<void()> write_callback_;
+
+    bool tied_{false};
+    std::weak_ptr<void> tie_;
 
 public:
     DISALLOW_COPY_AND_MOVE(Channel);
@@ -23,6 +27,7 @@ public:
 
 
     void HandleEvent() const; //处理事件
+    void HandleEventWithGuard() const;
     void EnableRead(); //允许读
     void EnableWrite();
     void EnableET();
@@ -39,6 +44,8 @@ public:
     void SetReadyEvents(int ev);
     void set_read_callback(std::function<void()>const &callback);
     void set_write_callback(std::function<void()>const &callback);
+
+    void Tie(const std::shared_ptr<void> &ptr); // 设定tie
 
 };
 

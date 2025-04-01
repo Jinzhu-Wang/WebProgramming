@@ -14,9 +14,9 @@ int main(int argc, char const *argv[])
 {
     ThreadPool *poll = new ThreadPool();
     std::function<void()> func = std::bind(print, 1, 3.14, "hello", std::string("world"));
-    poll->add(func);
+    poll->Add(func);
     func = test;
-    poll->add(func);
+    poll->Add(func);
     delete poll;
     return 0;
 }

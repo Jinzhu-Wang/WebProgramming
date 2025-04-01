@@ -15,7 +15,7 @@ enum class ConnectionState {
     Disconnected
 };
 
-class TcpConnection{
+class TcpConnection : public std::enable_shared_from_this<TcpConnection>{
 private:
     //该连接绑定的socket
     int connfd_;
@@ -29,8 +29,9 @@ private:
     std::unique_ptr<Buffer> read_buf_;
     std::unique_ptr<Buffer> send_buf_;
 
-    std::function<void(int)> on_close_;
-    std::function<void(TcpConnection *)> on_message_;
+    std::function<void(const std::shared_ptr<TcpConnection> &)> on_close_;
+    std::function<void(const std::shared_ptr<TcpConnection> &)> on_message_;
+    std::function<void(const std::shared_ptr<TcpConnection> &)> on_connect_;
 
     void ReadNonBlocking();
     void WriteNonBlocking();
@@ -40,8 +41,16 @@ public:
     TcpConnection(EventLoop* loop, int connfd, int connid);
     ~TcpConnection();
 
-    void set_close_callback(std::function<void(int)> const &fn); //修饰callback，表示函数不能改变callback本身的值。
-    void set_message_callback(std::function<void(TcpConnection*)> const &fn); //修饰callback，表示函数不能改变callback本身的值。
+    // 初始化TcpConneection
+    void ConnectionEstablished();
+    // 销毁TcpConnection
+    void ConnectionDestructor();
+    // 建立连接时调用回调函数
+    void set_connection_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &fn);
+    // 关闭时的回调函数
+    void set_close_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &fn); //修饰callback，表示函数不能改变callback本身的值。
+    // 接受到信息的回调函数    
+    void set_message_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &fn); //修饰callback，表示函数不能改变callback本身的值。
 
     void set_send_buf(const char* str);
     Buffer* read_buf();
@@ -53,8 +62,8 @@ public:
     void Send(const char* msg, int len);
     void Send(const char* msg);
 
-    void HandleMessage();
-    void HandleClose();
+    void HandleMessage(); // 当接收到信息时，进行回调
+    void HandleClose(); // 当TcpConnection发起关闭请求时，进行回调，释放相应的socket.
 
     ConnectionState state() const;
     EventLoop* loop() const;
