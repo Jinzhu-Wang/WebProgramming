@@ -1,0 +1,3 @@
+/home/wangjz/git_project/WebProgramming/MyWebServer/build/CMakeFiles/echoserver.dir
+/home/wangjz/git_project/WebProgramming/MyWebServer/build/CMakeFiles/edit_cache.dir
+/home/wangjz/git_project/WebProgramming/MyWebServer/build/CMakeFiles/rebuild_cache.dir

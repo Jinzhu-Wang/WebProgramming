@@ -26,7 +26,7 @@ TcpServer::TcpServer(EventLoop* loop, const char* ip, const int port): main_reac
 }
 
 void TcpServer::Start(){
-    for(int i =0;i<sub_reactors_.size();++i){
+    for(size_t i =0;i<sub_reactors_.size();++i){
         std::function<void()> sub_loop = std::bind(&EventLoop::Loop,sub_reactors_[i].get()) ;
         thread_pool_->Add(std::move(sub_loop));
     }

@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 #include <string.h>
 
-TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):loop_(loop), connfd_(connfd), connid_(connid){
+TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):connfd_(connfd), connid_(connid), loop_(loop){
     if(loop_!=nullptr){
         channel_ = std::make_unique<Channel>(connfd,loop);
         channel_->EnableET();
