@@ -10,7 +10,7 @@
 class EventLoop;
 class Acceptor;
 class TcpConnection;
-class ThreadPool;
+class EventLoopThreadPool;
 
 class TcpServer{
 private:
@@ -21,7 +21,7 @@ private:
     std::vector<std::unique_ptr<EventLoop>> sub_reactors_;
 
     std::unordered_map<int, std::shared_ptr<TcpConnection>> connections_map_;
-    std::unique_ptr<ThreadPool> thread_pool_;
+    std::unique_ptr<EventLoopThreadPool> thread_pool_;
 
     std::function<void(const std::shared_ptr<TcpConnection> &)> on_connect_;
     std::function<void(const std::shared_ptr<TcpConnection> &)> on_message_;
@@ -41,6 +41,9 @@ public:
     inline void HandleCloseInLoop(const std::shared_ptr<TcpConnection> &);
 
     inline void HandleNewConnection(int fd);
+
+    //定义线程数量
+    void SetThreadNums(int thread_nums);
 };
 
 

@@ -2,7 +2,7 @@
 #include "TcpConnection.h"
 #include "EventLoop.h"
 #include "Acceptor.h"
-#include "ThreadPool.h"
+#include "EventLoopThreadPool.h"
 #include "CurrentThread.h"
 #include "common.h"
 #include <unistd.h>
@@ -13,32 +13,30 @@
 
 TcpServer::TcpServer(EventLoop* loop, const char* ip, const int port): main_reactor_(loop), next_conn_id_(1){
     // main_reactor_ = std::make_unique<EventLoop>();
+    //创建主reactor
     acceptor_ = std::make_unique<Acceptor>(main_reactor_.get(),ip,port);
     std::function<void(int)> cb = std::bind(&TcpServer::HandleNewConnection,this,std::placeholders::_1) ;
     acceptor_->set_new_connection_callback(cb);
 
-    int size = std::thread::hardware_concurrency();
-    thread_pool_ = std::make_unique<ThreadPool>(size);
-    for(int i =0;i<size;++i){
-        std::unique_ptr<EventLoop> sub_reactor = std::make_unique<EventLoop>();
-        sub_reactors_.emplace_back(std::move(sub_reactor));
-    }
+    //创建线程池
+    thread_pool_ = std::make_unique<EventLoopThreadPool>(loop);
 }
 
 void TcpServer::Start(){
-    for(size_t i =0;i<sub_reactors_.size();++i){
-        std::function<void()> sub_loop = std::bind(&EventLoop::Loop,sub_reactors_[i].get()) ;
-        thread_pool_->Add(std::move(sub_loop));
-    }
+    //创建子线程和对应的EventLoop
+    thread_pool_->Start();
     main_reactor_->Loop();
 }
 
 inline void TcpServer::HandleNewConnection(int fd){
     if(fd!=-1){
         std::cout<<"New Connection fd:" << fd << std::endl;
-        int random = fd % sub_reactors_.size();
+        //int random = fd % sub_reactors_.size();
 
-        std::shared_ptr<TcpConnection> conn = std::make_shared<TcpConnection>(sub_reactors_[random].get(),fd,next_conn_id_);
+        //从线程池中获得一个EventLoop
+        EventLoop* sub_reactor = thread_pool_->NextLoop();
+
+        std::shared_ptr<TcpConnection> conn = std::make_shared<TcpConnection>(sub_reactor,fd,next_conn_id_);
         std::function<void(const std::shared_ptr<TcpConnection>&)> cb = std::bind(&TcpServer::HandleClose, this, std::placeholders::_1);
         conn->set_connection_callback(on_connect_);
 
@@ -79,6 +77,7 @@ void TcpServer::set_connection_callback(std::function<void(const std::shared_ptr
 void TcpServer::set_message_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &fn){
     on_message_ = std::move(fn);
 }
+void TcpServer::SetThreadNums(int thread_nums) { thread_pool_->SetThreadNums(thread_nums); }
 
 TcpServer::~TcpServer(){ }
 
