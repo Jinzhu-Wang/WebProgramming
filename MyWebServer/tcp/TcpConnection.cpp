@@ -64,6 +64,7 @@ void TcpConnection::HandleMessage(){
 void TcpConnection::HandleClose(){
     if(state_!= ConnectionState::Disconnected){
         state_ = ConnectionState::Disconnected;
+        loop_->DeleteChannel(channel_.get()); // 子线程移除 Channel,避免异步移除的等待
         if(on_close_){ on_close_(shared_from_this());}
     }
 }
@@ -87,7 +88,8 @@ void TcpConnection::Send(const  char* msg){
 }
 
 void TcpConnection::Read(){
-    if(state_ != ConnectionState::Connected){return;} //验证是否为connect状态
+   //if(state_ != ConnectionState::Connected){return;} 
+    assert(state_ == ConnectionState::Connected); //验证是否为connect状态
     read_buf_->Clear();
     ReadNonBlocking();
 }
