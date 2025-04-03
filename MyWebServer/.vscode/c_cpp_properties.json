@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/tcp",
-                "${workspaceFolder}/base"
+                "${workspaceFolder}/base",
+                "${workspaceFolder}/http"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
