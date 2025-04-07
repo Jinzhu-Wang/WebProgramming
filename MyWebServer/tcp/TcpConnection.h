@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 
-
+class HttpContext;
 class Buffer;
 
 enum class ConnectionState {
@@ -35,6 +35,8 @@ private:
 
     void ReadNonBlocking();
     void WriteNonBlocking();
+
+    std::unique_ptr<HttpContext> context_;
 
 public:
     DISALLOW_COPY_AND_MOVE(TcpConnection);
@@ -69,6 +71,7 @@ public:
     EventLoop* loop() const;
     int fd() const;
     int id() const;    
+    HttpContext *context() const;
 };
 
 
