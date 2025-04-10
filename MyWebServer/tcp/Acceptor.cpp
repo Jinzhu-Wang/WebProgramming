@@ -36,6 +36,12 @@ void Acceptor::Create(){
     if(listenfd_ == -1){
         std::cout << "Failed to create socket" <<std::endl;
     }
+    // 设置 SO_REUSEADDR 选项
+    int opt = 1; // 用于 setsockopt 的值，非零表示启用
+    if (setsockopt(listenfd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        std::cerr << "setsockopt(SO_REUSEADDR) failed" << std::endl;
+        close(listenfd_);
+    }
 }
 
 void Acceptor::Bind(const char* ip, const int port){

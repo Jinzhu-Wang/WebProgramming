@@ -2,12 +2,14 @@
 #define TCPCONNECTION_H
 
 #include "common.h"
+#include "TimeStamp.h"
 #include <functional>
 #include <memory>
 #include <string>
 
 class HttpContext;
 class Buffer;
+class TimeStamp;
 
 enum class ConnectionState {
     Invalid = 1,
@@ -37,6 +39,9 @@ private:
     void WriteNonBlocking();
 
     std::unique_ptr<HttpContext> context_;
+
+    // 需要频繁赋值，使用普通成员变量。
+    TimeStamp timestamp_; //前向声明只允许使用指针或引用这是一个对象实例
 
 public:
     DISALLOW_COPY_AND_MOVE(TcpConnection);
@@ -72,6 +77,9 @@ public:
     int fd() const;
     int id() const;    
     HttpContext *context() const;
+
+    TimeStamp timestamp() const;
+    void UpdateTimeStamp(TimeStamp now);
 };
 
 

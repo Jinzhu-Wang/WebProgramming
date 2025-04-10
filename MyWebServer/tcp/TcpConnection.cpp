@@ -153,3 +153,8 @@ void TcpConnection::WriteNonBlocking(){
 
 HttpContext *TcpConnection::context() const { return context_.get(); }
 
+TimeStamp TcpConnection::timestamp() const { return timestamp_; }
+void TcpConnection::UpdateTimeStamp(TimeStamp now){
+    timestamp_ = now;
+}
+
