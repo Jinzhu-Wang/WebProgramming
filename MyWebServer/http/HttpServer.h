@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdio.h>
 #include "common.h"
+#include "TimeStamp.h"
 
 
 class TcpServer;
@@ -34,6 +35,10 @@ public:
     void onRequest(const TcpConnectionPtr &conn, const HttpRequest &request);
 
     void SetThreadNums(int thread_nums);
+
+    void TestTimer_IntervalEvery3Seconds() const {
+        printf("%s TestTimer_IntervalEvery3Seconds\n", TimeStamp::Now().ToFormattedString().data());
+    }
 
 private:
     EventLoop *loop_;

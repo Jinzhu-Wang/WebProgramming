@@ -10,6 +10,8 @@
 
 
 class Epoller;
+class TimerQueue;
+class TimeStamp;
 class EventLoop{
 private:
     std::unique_ptr<Epoller> poller_;
@@ -22,6 +24,8 @@ private:
     bool calling_functors_;
     pid_t tid_;
 
+    std::unique_ptr<TimerQueue> timer_queue_;
+
 public:
     DISALLOW_COPY_AND_MOVE(EventLoop);
     EventLoop();
@@ -30,6 +34,11 @@ public:
     void Loop();
     void UpdateChannel(Channel*) const;
     void DeleteChannel(Channel*) const;
+
+    // 定时器功能，
+    void RunAt(TimeStamp timestamp, std::function<void()> const & cb);
+    void RunAfter(double wait_time, std::function < void()>const & cb);
+    void RunEvery(double interval, std::function<void()> const & cb);
 
     // 运行队列中的任务
     void DoToDoList();
