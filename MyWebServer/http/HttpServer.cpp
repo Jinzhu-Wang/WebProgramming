@@ -5,6 +5,7 @@
 #include "Acceptor.h"
 #include "TcpServer.h"
 #include "TcpConnection.h"
+#include "Logging.h"
 #include "Buffer.h"
 #include "EventLoop.h"
 #include "CurrentThread.h"
@@ -27,6 +28,8 @@ HttpServer::HttpServer(EventLoop * loop, const char *ip, const int port, bool au
         std::bind(&HttpServer::onMessage, this, std::placeholders::_1)
     );
     SetHttpCallback(std::bind(&HttpServer::HttpDefaultCallBack, this, std::placeholders::_1, std::placeholders::_2));
+
+    LOG_INFO << "HttpServer Listening on [ " << ip << ":" << port << " ]";
     //loop_->RunEvery(3.0, std::bind(&HttpServer::TestTimer_IntervalEvery3Seconds, this));
 };
 
@@ -39,11 +42,9 @@ void HttpServer::onConnection(const TcpConnectionPtr &conn){
     socklen_t peer_addrlength = sizeof(peeraddr);
     getpeername(clnt_fd, (struct sockaddr *)&peeraddr, &peer_addrlength);
 
-    std::cout << CurrentThread::tid()
-              << " WebServer::OnNewConnection : new connection "
-              << "[fd#" << clnt_fd << "]"
-              << " from " << inet_ntoa(peeraddr.sin_addr) << ":" << ntohs(peeraddr.sin_port)
-              << std::endl;
+    LOG_INFO << "HttpServer::OnNewConnection : Add connection "
+             << "[ fd#" << clnt_fd << "-id#" << conn->id() <<  " ]"
+             << " from " << inet_ntoa(peeraddr.sin_addr) << ":" << ntohs(peeraddr.sin_port);
 
     if(auto_close_conn_){
         loop_->RunAfter(AUTOCLOSETIMEOUT,std::move(std::bind(&HttpServer::ActiveCloseConn,this,std::weak_ptr<TcpConnection>(conn))));

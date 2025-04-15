@@ -1,16 +1,19 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-class TcpServer;
-class EventLoop;
-class Poller;
-class PollPoller;
-class Acceptor;
-class TcpConnection;
+class Epoller;
 class Channel;
-class Socket;
 class Buffer;
+class EventLoop;
+class TcpConnection;
 class ThreadPool;
+class Acceptor;
+class TcpServer;
+
+class HttpServer;
+class HttpContext;
+class HttpRequest;
+class HttpResponse;
 
 // Macros to disable copying and moving
 #define DISALLOW_COPY(cname)     \
@@ -25,5 +28,13 @@ class ThreadPool;
   DISALLOW_COPY(cname);               \
   DISALLOW_MOVE(cname);
 
-
+enum RC {
+  RC_UNDEFINED,
+  RC_SUCCESS,
+  RC_SOCKET_ERROR,
+  RC_POLLER_ERROR,
+  RC_CONNECTION_ERROR,
+  RC_ACCEPTOR_ERROR,
+  RC_UNIMPLEMENTED
+};
 #endif

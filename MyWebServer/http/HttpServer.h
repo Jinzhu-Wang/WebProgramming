@@ -4,11 +4,12 @@
 #include <memory>
 #include <stdio.h>
 #include "common.h"
-#include "TimeStamp.h"
+// #include "TimeStamp.h"
 
 // 自动关闭的时间，以秒为单位
-#define AUTOCLOSETIMEOUT 10
+#define AUTOCLOSETIMEOUT 100
 
+class TimeStamp;
 class TcpServer;
 class TcpConnection;
 class HttpRequest;
