@@ -43,8 +43,7 @@ void LogFile::Write(const char* data, int len) {
     int pos = 0;
     while (pos != len) {
         // 使用无锁版本加快写入速度，一般一个系统只有一个后端日志系统。
-        pos += static_cast<int>(fwrite_unlocked(data + pos, 
-    										sizeof(char), len - pos, fp_));
+        pos += static_cast<int>(fwrite_unlocked(data + pos, sizeof(char), len - pos, fp_));
     }
     time_t now = ::time(nullptr);
     // 更新当前状态

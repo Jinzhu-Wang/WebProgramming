@@ -59,8 +59,9 @@ void HttpServer::onMessage(const TcpConnectionPtr &conn){
             conn->UpdateTimeStamp(TimeStamp::Now());
 
         HttpContext *context = conn->context();
-        if (!context->ParaseRequest(conn->read_buf()->c_str(), conn->read_buf()->Size()))
+        if (!context->ParaseRequest(conn->read_buf()->RetrieveAllAsString()))
         {
+            LOG_INFO << "HttpServer::onMessage : Receive non HTTP message";
             conn->Send("HTTP/1.1 400 Bad Request\r\n\r\n");
             conn->HandleClose();
         }

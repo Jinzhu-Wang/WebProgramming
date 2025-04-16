@@ -59,7 +59,7 @@ public:
     // 接受到信息的回调函数    
     void set_message_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &fn); //修饰callback，表示函数不能改变callback本身的值。
 
-    void set_send_buf(const char* str);
+
     Buffer* read_buf();
     Buffer* send_buf();
 

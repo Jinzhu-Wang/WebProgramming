@@ -18,7 +18,7 @@ TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):connfd_(co
         channel_ = std::make_unique<Channel>(connfd,loop);
         channel_->EnableET();
         channel_->set_read_callback(std::bind(&TcpConnection::HandleMessage,this));
-        channel_->EnableRead();
+        //channel_->EnableRead();
     }
     read_buf_ = std::make_unique<Buffer>();
     send_buf_ = std::make_unique<Buffer>();
@@ -32,7 +32,7 @@ TcpConnection::~TcpConnection(){
 void TcpConnection::ConnectionEstablished(){
     state_ = ConnectionState::Connected;
     channel_->Tie(shared_from_this());
-    // channel_->EnableRead();
+    channel_->EnableRead();
     loop_->UpdateChannel(channel_.get());
     if(on_connect_){
         on_connect_(shared_from_this());
@@ -75,31 +75,33 @@ EventLoop* TcpConnection::loop() const{return loop_;}
 int TcpConnection::id() const { return connid_; }
 int TcpConnection::fd() const { return connfd_; }
 ConnectionState TcpConnection::state() const{ return state_;}
-void TcpConnection::set_send_buf(const char* str){ send_buf_->set_buf(str);}
 Buffer* TcpConnection::read_buf(){ return read_buf_.get();}
 Buffer *TcpConnection::send_buf() { return send_buf_.get(); }
 
 void TcpConnection::Send(const std::string &msg){
-    set_send_buf(msg.c_str());
-    Write();
+    Send(msg.data(),static_cast<int>(msg.size()));
 }
 
 void TcpConnection::Send(const  char* msg){
-    set_send_buf(msg);
+    Send(msg,static_cast<int>(strlen(msg)));
+}
+
+void TcpConnection::Send(const char* msg, int len){
+    send_buf_->Append(msg,len);
     Write();
 }
 
 void TcpConnection::Read(){
    //if(state_ != ConnectionState::Connected){return;} 
     assert(state_ == ConnectionState::Connected); //验证是否为connect状态
-    read_buf_->Clear();
+    read_buf_->RetrieveAll();
     ReadNonBlocking();
 }
 
 void TcpConnection::Write(){
     assert(state_ == ConnectionState::Connected);
     WriteNonBlocking();
-    send_buf_->Clear();
+    send_buf_->RetrieveAll();
 }
 
 void TcpConnection::ReadNonBlocking(){
@@ -128,9 +130,9 @@ void TcpConnection::ReadNonBlocking(){
 }
 
 void TcpConnection::WriteNonBlocking(){
-    char buf[send_buf_->Size()];
-    memcpy(buf, send_buf_->c_str(), send_buf_->Size());
-    int data_size = send_buf_->Size();
+    char buf[send_buf_->readablebytes()];
+    memcpy(buf, send_buf_->beginread(), send_buf_->readablebytes());
+    int data_size = send_buf_->readablebytes();
     int data_left = data_size;
 
     while(data_left >0){
