@@ -39,7 +39,12 @@ void Channel::HandleEventWithGuard() const{
 }
 
 void Channel::EnableRead(){
-    listen_events_ |= EPOLLIN | EPOLLET;
+    listen_events_ |= (EPOLLIN | EPOLLET);
+    loop_->UpdateChannel(this);
+}
+
+void Channel::EnableWrite(){
+    listen_events_ |= EPOLLOUT;
     loop_->UpdateChannel(this);
 }
 
