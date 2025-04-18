@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <iostream>
+#include <netinet/tcp.h>
 
 
 Acceptor::Acceptor(EventLoop* loop,const char* ip, const int port):loop_(loop),listenfd_(-1){
@@ -63,13 +64,38 @@ void Acceptor::Listen(){
     }
 }
 
+// 设置TCP连接Keepalive
+void Acceptor::SetTcpKeepAlive(int sockfd) {
+    int yes = 1;
+    // 启用 TCP Keepalive
+    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1) {
+        perror("setsockopt(SO_KEEPALIVE) failed");
+    }
+    // 设置 TCP Keepalive 空闲时间为 1分钟 (60秒)
+    int keep_idle = 60;
+    if (setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE, &keep_idle, sizeof(keep_idle)) == -1) {
+        perror("setsockopt(TCP_KEEPIDLE) failed");
+    }
+    // 设置 Keepalive 探测间隔为 10秒
+    int keep_interval = 10;
+    if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval)) == -1) {
+        perror("setsockopt(TCP_KEEPINTVL) failed");
+    }
+    // 设置 Keepalive 探测的最大尝试次数为 5次
+    int keep_count = 5;
+    if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT, &keep_count, sizeof(keep_count)) == -1) {
+        perror("setsockopt(TCP_KEEPCNT) failed");
+    }
+}
+
 void Acceptor::AcceptConnection(){
     struct sockaddr_in client_addr;
     socklen_t client_addr_length = sizeof(client_addr);
     assert(listenfd_ != -1);
 
     int clnt_fd = ::accept4(listenfd_, (struct sockaddr*)& client_addr, &client_addr_length, SOCK_NONBLOCK | SOCK_CLOEXEC);
-    
+    SetTcpKeepAlive(clnt_fd); //设置TCP连接Keepalive
+
     if (clnt_fd == -1){
         std::cout << "Failed to Accept" << std::endl;
     }

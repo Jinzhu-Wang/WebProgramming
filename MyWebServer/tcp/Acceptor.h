@@ -36,6 +36,9 @@ public:
     //接收链接
     void AcceptConnection();
 
+    //设置TCP连接Keepalive
+    void SetTcpKeepAlive(int sockfd);
+
 };
 
 

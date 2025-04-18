@@ -7,7 +7,7 @@
 // #include "TimeStamp.h"
 
 // 自动关闭的时间，以秒为单位
-#define AUTOCLOSETIMEOUT 10
+#define AUTOCLOSETIMEOUT 360
 
 class TimeStamp;
 class TcpServer;
