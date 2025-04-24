@@ -83,7 +83,7 @@ void TimerQueue::ResetTimers() {
     } 
 
     if (!timers_.empty()) {
-        ResetTimerFd(timers_.begin()->second);
+        ResetTimerFd(timers_.begin()->second);  //更新timerfd_的出发时间，只需要集合的begin就行了
     }
 }
 

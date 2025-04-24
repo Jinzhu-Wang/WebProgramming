@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <string.h>
+#include <sys/sendfile.h>
 
 TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):connfd_(connfd), connid_(connid), loop_(loop){
     if(loop_!=nullptr){
@@ -183,5 +184,23 @@ HttpContext *TcpConnection::context() const { return context_.get(); }
 TimeStamp TcpConnection::timestamp() const { return timestamp_; }
 void TcpConnection::UpdateTimeStamp(TimeStamp now){
     timestamp_ = now;
+}
+
+void TcpConnection::SendFile(int filefd, int size){
+    ssize_t send_size = 0;
+    ssize_t data_size = static_cast<ssize_t>(size);
+
+    while(send_size<data_size){
+        ssize_t bytes_write = sendfile(connfd_,filefd,(off_t*)&send_size,data_size-send_size);
+        if(bytes_write==-1){
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)){
+                continue;
+            }else{
+                //continue;
+                break;
+            }
+        }
+        send_size +=bytes_write;
+    }
 }
 

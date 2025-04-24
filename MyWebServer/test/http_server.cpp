@@ -6,15 +6,24 @@
 #include "Logging.h"
 #include "AsyncLogging.h"
 #include <string>
+#include <vector>
 #include <memory>
 #include <fstream>
 #include <jsoncpp/json/json.h>
+#include <dirent.h>
+
+#include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
 #include <libgen.h>
 
+std::string GetCurrentDir() ;
+// 读取文件
 std::string ReadFile(const std::string& path){
-    // std::cout<<"path : "<<path<<std::endl;
-    std::ifstream is(path.c_str(), std::ifstream::in);
+    std::string complete_path = GetCurrentDir()+"/"+path;
+    // std::cout<<"complete_read: "<<complete_path<<std::endl;
+    std::ifstream is(complete_path.c_str(), std::ifstream::in);
 
     // 寻找文件末端
     is.seekg(0, is.end);
@@ -32,6 +41,106 @@ std::string ReadFile(const std::string& path){
     return msg;
 }
 
+
+// 获取当前目录下所有文件的名字
+void FindAllFiles(const std::string& path, std::vector<std::string> &filelist){
+    DIR *dir;
+    struct dirent *dir_entry = NULL;
+    std::string complete_path = GetCurrentDir()+"/"+path;
+    // std::cout<<"complete_find: "<<complete_path<<std::endl;
+    if((dir = opendir(complete_path.c_str())) == NULL){
+        LOG_ERROR << "Opendir " << path << " failed";
+        return;
+    }
+    
+    while((dir_entry = readdir(dir))!= NULL){
+        std::string filename = dir_entry->d_name;
+        if (filename != "." && filename != ".."){
+            filelist.push_back(filename);
+        }
+            
+    }
+}
+
+// 构建filelist.html
+std::string BuildFileHtml(){
+    std::vector<std::string> filelist;
+    // 以/files文件夹为例
+    FindAllFiles("../files", filelist);
+
+    // 为文件生成模板
+    std::string file = "";
+    for (auto filename : filelist)
+    {
+        //将fileitem中的所有filename替换成
+        file += "<tr><td>" + filename + "</td>" +
+                "<td>" +
+                "<a href=\"/download/" + filename + "\">下载</a>" +
+                "<a href=\"/delete/" + filename + "\">删除</a>" +
+                "</td></tr>" + "\n";
+    }
+
+
+    //生成html页面
+    // 主要通过将<!--filelist-->直接进行替换实现
+    std::string tmp = "<!--filelist-->";
+    std::string filehtml = ReadFile("../static/fileserver.html");
+    filehtml = filehtml.replace(filehtml.find(tmp), tmp.size(), file);
+    return filehtml;
+}
+
+
+void RemoveFile(const std::string & filename,HttpResponse *response){
+    std::string dir_path = GetCurrentDir()+"/../files/";
+    // std::cout<<"Removefilename: "<<filename<<std::endl;
+    // std::cout<<"---------------------"<<std::endl;
+    int ret = remove(( dir_path + filename).c_str());
+    if(ret != 0){
+        LOG_ERROR << "删除文件 " << filename << " 失败";
+        response->SetStatusCode(HttpStatusCode::k500InternalServerError);
+        response->SetStatusMessage("Internal Server Error");
+        response->SetBody("Failed to delete file\n");
+    }else{
+        LOG_INFO << "删除文件 " << filename << " 成功";
+        // 设置响应头字段
+        response->SetStatusCode(HttpStatusCode::k302K);
+        response->SetStatusMessage("Moved Temporarily");
+        response->SetContentType("text/html");
+        response->AddHeader("Location", "/fileserver");
+
+        // 设置文件
+        response->SetFileFd(-1);
+    }
+}
+
+void DownloadFile(const std::string &filename, HttpResponse *response){
+    std::string dir_path = GetCurrentDir()+"/../files/";
+    // std::cout<<"Downfilename: "<<filename<<std::endl;
+    // std::cout<<"---------------------"<<std::endl;
+    int filefd = ::open((dir_path + filename).c_str(), O_RDONLY);
+    if(filefd == -1){
+        LOG_ERROR << "OPEN FILE ERROR";
+        response->SetStatusCode(HttpStatusCode::k302K);
+        response->SetStatusMessage("Moved Temporarily");
+        response->SetContentType("text/html");
+        response->AddHeader("Location", "/fileserver");
+    }else{
+        // 获取文件信息
+        struct stat fileStat;
+        fstat(filefd, &fileStat);
+        // 设置响应头字段
+        response->SetStatusCode(HttpStatusCode::k200K);
+        response->SetContentLength(fileStat.st_size);
+        response->SetContentType("application/octet-stream");
+        
+        response->SetBodyType(HttpBodyType::FILE_TYPE);
+        // response->AddHeader("Transfer-Encoding", "chunked");
+
+        // 设置文件
+        response->SetFileFd(filefd);
+    }
+}
+
 std::string GetCurrentDir() {
     char current_dir[1024];
     if (realpath(__FILE__, current_dir) == NULL) {
@@ -42,30 +151,57 @@ std::string GetCurrentDir() {
     std::string dir_path(dirname(current_dir)); // dirname 去掉文件名部分
     return dir_path;
 }
+    
 
 void HttpResponseCallback(const HttpRequest &request, HttpResponse *response)
 {
-    // 获取当前代码所在路径
-    std::string current_dir = GetCurrentDir();
     // LOG_INFO << request.GetMethodString() << " " << request.url();
     std::string url = request.url();
-    if(request.method() == RequestMethod::kGet){  
+    if(request.method() == RequestMethod::kGet){
+        
         if(url == "/"){
-            std::string body = ReadFile(current_dir+"/../static/index.html");
+            std::string body = ReadFile("../static/index.html");
             response->SetStatusCode(HttpStatusCode::k200K);
+            response->SetContentLength(body.size());
             response->SetBody(body);
             response->SetContentType("text/html");
         }else if(url == "/mhw"){
-            std::string body = ReadFile(current_dir+"/../static/mhw.html");
+            std::string body = ReadFile("../static/mhw.html");
             response->SetStatusCode(HttpStatusCode::k200K);
+            response->SetContentLength(body.size());
             response->SetBody(body);
             response->SetContentType("text/html");
         }else if(url == "/cat.jpg"){
-            std::string body = ReadFile(current_dir+"/../static/cat.jpg");
+            std::string body = ReadFile("../static/cat.jpg");
+            response->SetContentLength(body.size());
             response->SetStatusCode(HttpStatusCode::k200K);
             response->SetBody(body);
             response->SetContentType("image/jpeg");
-        }else{
+        }else if(url == "/fileserver"){
+            std::string body = BuildFileHtml();
+            response->SetContentLength(body.size());
+            response->SetStatusCode(HttpStatusCode::k200K);
+            response->SetBody(body);
+            response->SetContentType("text/html");
+        }else if(url.substr(0, 7) == "/delete") {
+            // 删除特定文件，由于使用get请求，并且会将相应删掉文件的名称放在url中
+            RemoveFile(url.substr(8),response);
+            // 发送重定向报文，删除后返回自身应在的位置
+            // response->SetStatusCode(HttpStatusCode::k302K);
+            // response->SetStatusMessage("Moved Temporarily");
+            // response->SetContentType("text/html");
+            // response->AddHeader("Location", "/fileserver");
+
+        }else if(url.substr(0, 9) == "/download"){
+            DownloadFile(url.substr(10), response);
+            //response->SetStatusCode(HttpResponse::HttpStatusCode::k200K);
+        }else if(url == "/favicon.ico"){
+            std::string body = ReadFile("../static/cat.jpg");
+            response->SetStatusCode(HttpStatusCode::k200K);
+            response->SetBody(body);
+            response->SetContentType("image/jpeg");
+        }else
+        {
             response->SetStatusCode(HttpStatusCode::k404NotFound);
             response->SetStatusMessage("Not Found");
             response->SetBody("Sorry Not Found\n");
@@ -102,17 +238,19 @@ void HttpResponseCallback(const HttpRequest &request, HttpResponse *response)
             response->SetStatusMessage("OK");
             response->SetContentType("text/plain");
         }
-        }
+    }
+
+    //LOG_INFO << response->message();
     return;
 }
 
 
+// 异步日志库相关
 std::unique_ptr<AsyncLogging> asynclog;
 void AsyncOutputFunc(const char *data, int len)
 {
     asynclog->Append(data, len);
 }
-
 void AsyncFlushFunc() {
     asynclog->Flush();
 }

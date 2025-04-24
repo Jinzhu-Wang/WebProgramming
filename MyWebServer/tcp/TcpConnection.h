@@ -68,6 +68,7 @@ public:
     void Send(const std::string &msg); //输出信息
     void Send(const char* msg, int len);
     void Send(const char* msg);
+    void SendFile(int filefd, int size);
 
     void HandleMessage(); // 当接收到信息时，进行回调
     void HandleWrite();
