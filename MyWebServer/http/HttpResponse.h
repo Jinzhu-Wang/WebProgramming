@@ -60,7 +60,7 @@ private:
     bool close_connection_;
 
     int filefd_;
-    HttpBodyType body_type_;    
+    HttpBodyType body_type_ = HttpBodyType::HTML_TYPE;    
 };
 
 

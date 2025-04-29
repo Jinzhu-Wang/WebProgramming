@@ -106,6 +106,7 @@ void TcpConnection::Send(const char* msg, int len){
         send_size = static_cast<int>(write(connfd_,msg,len));
         if(send_size >=0){
             //说明发送了部分数据
+            LOG_INFO<<"send-------------";
             remaining -= send_size;
         } else if((send_size == -1) && ((errno == EAGAIN)||(errno==EWOULDBLOCK))){
             //说明此时TCP缓冲区是满的，没有办法写入，什么都不做
