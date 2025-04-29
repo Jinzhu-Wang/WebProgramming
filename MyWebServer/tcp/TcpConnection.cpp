@@ -6,6 +6,7 @@
 #include "EventLoop.h"
 #include "HttpContext.h"
 #include "Logging.h"
+#include "CurrentThread.h"
 
 #include <memory>
 #include <unistd.h>
@@ -29,6 +30,7 @@ TcpConnection::TcpConnection(EventLoop* loop, int connfd, int connid):connfd_(co
 }
 
 TcpConnection::~TcpConnection(){
+    LOG_INFO<<"----------------------------------------"<<"connfd_:"<<connfd_<<"remove-----";
     ::close(connfd_);
 }
 
@@ -36,17 +38,17 @@ void TcpConnection::ConnectionEstablished(){
     state_ = ConnectionState::Connected;
     channel_->Tie(shared_from_this());
     channel_->EnableRead();
-    loop_->UpdateChannel(channel_.get());
     if(on_connect_){
         on_connect_(shared_from_this());
     }
 }
 
 void TcpConnection::ConnectionDestructor(){
-    //std::cout << CurrentThread::tid() << " TcpConnection::ConnectionDestructor" << std::endl;
+    LOG_INFO<< CurrentThread::tid()<< "fd: "<<connfd_ << " TcpConnection::ConnectionDestructor" ;
     // 将该操作从析构处，移植该处，增加性能，因为在析构前，当前`TcpConnection`已经相当于关闭了。
     // 已经可以将其从loop处离开。
     loop_->DeleteChannel(channel_.get());
+
 }
 
 void TcpConnection::set_connection_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &callback){
@@ -74,7 +76,7 @@ void TcpConnection::HandleWrite(){
 void TcpConnection::HandleClose(){
     if(state_!= ConnectionState::Disconnected){
         state_ = ConnectionState::Disconnected;
-        loop_->DeleteChannel(channel_.get()); // 子线程移除 Channel,避免异步移除的等待
+        // loop_->DeleteChannel(channel_.get()); // 子线程移除 Channel,避免异步移除的等待
         if(on_close_){ on_close_(shared_from_this());}
     }
 }
@@ -125,8 +127,8 @@ void TcpConnection::Send(const char* msg, int len){
 }
 
 void TcpConnection::Read(){
-   //if(state_ != ConnectionState::Connected){return;} 
-    assert(state_ == ConnectionState::Connected); //验证是否为connect状态
+   if(state_ != ConnectionState::Connected){return;} 
+    // assert(state_ == ConnectionState::Connected); //验证是否为connect状态
     read_buf_->RetrieveAll();
     ReadNonBlocking();
 }

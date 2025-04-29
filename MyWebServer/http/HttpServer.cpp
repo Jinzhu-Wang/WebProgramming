@@ -117,17 +117,15 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, const HttpRequest &requ
         std::string filedata = filemessage.substr(begin_index, end_index - begin_index);
         // 写入文件
         std::string dir_path = GetCurrentDir()+"/../files/" + filename;
-        std::ofstream ofs(dir_path, std::ios::out | std::ios::app | std::ios::binary);
-        ofs.write(filedata.data(), filedata.size());
+        std::ofstream ofs(dir_path, std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.is_open()) {
             LOG_ERROR << "Failed to open file: " << filename;
             return;
         }
+        ofs.write(filedata.data(), filedata.size());
         ofs.close();
     }             
     
-
-
     HttpResponse response(isclose);
     response_callback_(request, &response);
 

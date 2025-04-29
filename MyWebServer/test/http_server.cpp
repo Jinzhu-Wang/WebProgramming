@@ -25,11 +25,20 @@ std::string ReadFile(const std::string& path){
     // std::cout<<"complete_read: "<<complete_path<<std::endl;
     std::ifstream is(complete_path.c_str(), std::ifstream::in);
 
+    if (!is) {
+        std::cerr << "Failed to open file: " << complete_path << std::endl;
+        return "";  // 或者 throw/记录日志
+    }
+
     // 寻找文件末端
     is.seekg(0, is.end);
 
     // 获取长度
     int flength = is.tellg();
+    if (flength <= 0) {
+        std::cerr << "File is empty or invalid: " << complete_path << std::endl;
+        return "";
+    }
 
     //重新定位
     is.seekg(0, is.beg);
@@ -147,8 +156,7 @@ std::string GetCurrentDir() {
         std::cerr << "Error retrieving the current file path." << std::endl;
         return "";
     }
-
-    std::string dir_path(dirname(current_dir)); // dirname 去掉文件名部分
+    std::string dir_path(dirname(current_dir));
     return dir_path;
 }
     
@@ -279,6 +287,7 @@ int main(int argc, char *argv[]){
     //asynclog->Start();
 
     int size = std::thread::hardware_concurrency() - 1;
+    std::cout<<"thread_nums: "<<size<<std::endl;
     EventLoop *loop = new EventLoop();
     HttpServer *server = new HttpServer(loop, "127.0.0.1", port, true);
     server->SetHttpCallback(HttpResponseCallback);

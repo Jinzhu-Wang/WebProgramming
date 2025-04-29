@@ -39,7 +39,8 @@ void Epoller::UpdateChannel(Channel *channel) const{
         channel->SetInEpoll(true);
     } else{
         if(epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev) == -1){
-            LOG_ERROR << "Epoller::UpdateChannel epoll_ctl_mod failed";
+            LOG_ERROR << "epoll_ctl_mod failed for fd#" << fd << ", errno: " << errno 
+            << " (" << strerror(errno) << ")";
         }
     }
 }

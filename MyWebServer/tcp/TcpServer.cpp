@@ -67,8 +67,8 @@ inline void TcpServer::HandleCloseInLoop(const std::shared_ptr<TcpConnection> & 
     assert(it != connections_map_.end());
     connections_map_.erase(it);
     //在子线程已经移除了channel，那么主线程只需要移除已关闭的连接即可。
-    // EventLoop *loop = conn->loop();
-    // loop->QueueOneFunc(std::bind(&TcpConnection::ConnectionDestructor, conn));
+    EventLoop *loop = conn->loop();
+    loop->QueueOneFunc(std::bind(&TcpConnection::ConnectionDestructor, conn));
 }
 
 void TcpServer::set_connection_callback(std::function<void(const std::shared_ptr<TcpConnection> &)> const &fn){

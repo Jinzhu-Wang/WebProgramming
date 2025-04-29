@@ -3,6 +3,7 @@
 #include "Epoller.h"
 #include "CurrentThread.h"
 #include "TimerQueue.h"
+#include "Logging.h"
 #include "TimeStamp.h"
 
 #include <memory>
@@ -78,7 +79,12 @@ void EventLoop::DoToDoList(){
         functors.swap(to_do_list_);
     }
     for(const auto& func: functors){
-        func();
+        try {
+            LOG_INFO<<"Thread " << CurrentThread::tid()<<" todo func-------------";
+            func();
+        } catch (const std::exception& e) {
+            LOG_ERROR << "Exception in DoToDoList: " << e.what();
+        }
     }
 
     calling_functors_ = false;

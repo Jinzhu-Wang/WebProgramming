@@ -8,10 +8,7 @@
 
 Channel::Channel(int fd, EventLoop* loop): loop_(loop), fd_(fd), listen_events_(0), ready_events_(0), in_epoll_(false){}
 Channel::~Channel(){
-    if(fd_ != -1){
-        close(fd_);
-        fd_ = -1;
-    }
+
 }
 
 void Channel::HandleEvent() const{

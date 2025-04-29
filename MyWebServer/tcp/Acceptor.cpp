@@ -94,11 +94,12 @@ void Acceptor::AcceptConnection(){
     assert(listenfd_ != -1);
 
     int clnt_fd = ::accept4(listenfd_, (struct sockaddr*)& client_addr, &client_addr_length, SOCK_NONBLOCK | SOCK_CLOEXEC);
-    SetTcpKeepAlive(clnt_fd); //设置TCP连接Keepalive
-
+    
     if (clnt_fd == -1){
         std::cout << "Failed to Accept" << std::endl;
     }
+    
+    SetTcpKeepAlive(clnt_fd); //设置TCP连接Keepalive
     if(new_connection_callback_){
         new_connection_callback_(clnt_fd);
     }
