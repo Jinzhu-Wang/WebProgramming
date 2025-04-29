@@ -1,7 +1,0 @@
-20250415 18:11:18.690451Z 42873 INFO  HttpServer Listening on [ 127.0.0.1:8888 ] - HttpServer.cpp:32
-20250415 18:11:22.379670Z 42873 INFO  HttpServer::OnNewConnection : Add connection [ fd#75-id#1 ] from 127.0.0.1:53841 - HttpServer.cpp:45
-20250415 18:11:22.380144Z 42873 INFO  HttpServer::OnNewConnection : Add connection [ fd#76-id#2 ] from 127.0.0.1:53840 - HttpServer.cpp:45
-20250415 18:11:44.740411Z 42873 INFO  TcpServer::HandleCloseInLoop - Remove connection [id#2-fd#76] - TcpServer.cpp:65
-20250415 18:13:10.719532Z 42873 INFO  HttpServer::OnNewConnection : Add connection [ fd#76-id#3 ] from 127.0.0.1:53926 - HttpServer.cpp:45
-20250415 18:13:18.408098Z 42873 INFO  TcpServer::HandleCloseInLoop - Remove connection [id#1-fd#75] - TcpServer.cpp:65
-20250415 18:14:59.697206Z 42873 INFO  TcpServer::HandleCloseInLoop - Remove connection [id#3-fd#76] - TcpServer.cpp:65

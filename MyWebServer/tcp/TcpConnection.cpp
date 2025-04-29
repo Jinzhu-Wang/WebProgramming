@@ -154,7 +154,7 @@ void TcpConnection::ReadNonBlocking(){
             // printf("message from client fd %d: %s\n", connfd_, read_buf_->c_str());
             break;
         } else if(str_len==0){ //EOF，客户端断开连接 str_len==0
-            printf("EOF, client fd %d disconnected\n", connfd_);
+            // printf("EOF, client fd %d disconnected\n", connfd_);
             HandleClose();
             break;
         } else{

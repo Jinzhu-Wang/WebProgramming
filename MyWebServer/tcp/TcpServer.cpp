@@ -31,7 +31,7 @@ void TcpServer::Start(){
 
 inline void TcpServer::HandleNewConnection(int fd){
     if(fd!=-1){
-        std::cout<<"New Connection fd:" << fd << std::endl;
+        // std::cout<<"New Connection fd:" << fd << std::endl;
         //int random = fd % sub_reactors_.size();
 
         //从线程池中获得一个EventLoop
