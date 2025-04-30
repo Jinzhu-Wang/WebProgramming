@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstring>
 
+std::string GetCurrentDir();
+
 LogFile::LogFile(const char* filepath)
     : fp_(::fopen(filepath, "a+")),
       written_bytes_(0),
@@ -14,7 +16,8 @@ LogFile::LogFile(const char* filepath)
         //                       TimeStamp::Now().TimeStamp::ToFormattedDefaultLogString() +
         //                       ".log");
         //对于临时对象没必要进行move，因为编译器通常会执行复制省略直接在目标位置构造对象，而无需复制或移动。
-        std::string DefaultPath = "/home/wangjz/git_project/WebProgramming/MyWebServer/LogFiles/LogFile_" +
+        std::string dir_path = GetCurrentDir();
+        std::string DefaultPath = dir_path + "/../LogFiles/LogFile_" +
                                     TimeStamp::Now().TimeStamp::ToFormattedDefaultLogString() +
                                     ".log";
 
