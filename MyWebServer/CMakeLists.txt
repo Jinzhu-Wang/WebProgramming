@@ -9,6 +9,7 @@ include_directories(
     log
     http
     timer
+    CGI
 )
 
 set(CMAKE_CXX_FLAGS "-g -Wall -Werror -std=c++14")
@@ -30,11 +31,11 @@ aux_source_directory(tcp SRC_LIST2)
 aux_source_directory(http SRC_LIST3)
 aux_source_directory(timer SRC_LIST4)
 aux_source_directory(log SRC_LIST5)
+aux_source_directory(CGI SRC_LIST6)
 
 
 
-
-add_executable(webserver test/http_server.cpp ${SRC_LIST1} ${SRC_LIST2} ${SRC_LIST3} ${SRC_LIST4} ${SRC_LIST5})
+add_executable(webserver test/http_server.cpp ${SRC_LIST1} ${SRC_LIST2} ${SRC_LIST3} ${SRC_LIST4} ${SRC_LIST5} ${SRC_LIST6})
 # add_executable(test_logstream test/test_logstream.cpp ${SRC_LIST5})
 # add_executable(echoserver test/echo_server.cpp ${SRC_LIST1} ${SRC_LIST2} )
 # add_executable(test_context test/test_httpcontext.cpp ${SRC_LIST3} )

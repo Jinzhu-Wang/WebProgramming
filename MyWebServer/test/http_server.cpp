@@ -67,7 +67,6 @@ void FindAllFiles(const std::string& path, std::vector<std::string> &filelist){
         if (filename != "." && filename != ".."){
             filelist.push_back(filename);
         }
-            
     }
 }
 
