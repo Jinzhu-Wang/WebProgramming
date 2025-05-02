@@ -5,6 +5,8 @@
 #include "EventLoop.h"
 #include "Logging.h"
 #include "AsyncLogging.h"
+#include "MySQLConnection.h"
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -19,6 +21,106 @@
 #include <libgen.h>
 
 std::string GetCurrentDir() ;
+
+void HandleLogin(const std::string& username, const std::string& password, HttpResponse* response) {
+    MYSQL* conn = MySQLConnectionPool::getInstance().getConnection();
+    std::string body ;
+    if (!conn) {
+        LOG_ERROR << "无法获取数据库连接";
+        body="无法获取数据库连接";
+    }
+    MySQLRAII raii(conn, MySQLConnectionPool::getInstance()); //自动归还链接
+    std::string query = "SELECT * FROM user WHERE username='" + username + "' AND passwd='" + password + "'"; //有数据注入的风险
+    
+    // std::cout << "SQL: " << query << std::endl;
+    if (mysql_query(conn, query.c_str()) != 0) {
+        LOG_ERROR << "Database query failed: " << mysql_error(conn);
+        body = "db error!\n";
+    } else {
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (result && mysql_num_rows(result) > 0) {
+            body = "login ok!\n";
+        } else {
+            LOG_ERROR << "Login failed for username: " << username;
+            body = "login failed!\n";
+        }
+        mysql_free_result(result);
+    }
+    response->SetBody(body);
+    response->SetContentLength(body.size());
+    response->SetStatusCode(HttpStatusCode::k200K);
+    response->SetStatusMessage("OK");
+    response->SetContentType("text/plain");
+}
+
+void HandleRegister(const std::string& username, const std::string& password, HttpResponse* response) {
+    MYSQL* conn = MySQLConnectionPool::getInstance().getConnection();
+    if (!conn) {
+        LOG_ERROR << "无法获取数据库连接";
+        std::string body = "数据库连接失败!\n";
+        response->SetStatusCode(HttpStatusCode::k500InternalServerError);
+        response->SetStatusMessage("Internal Server Error");
+        response->SetBody(body);
+        response->SetContentType("text/plain");
+        response->SetContentLength(body.size());
+        response->AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->AddHeader("Pragma", "no-cache");
+        response->AddHeader("Expires", "0");
+        return;
+    }
+    MySQLRAII raii(conn, MySQLConnectionPool::getInstance());
+
+    // 转义用户名和密码以防止 SQL 注入
+    char escaped_username[username.length() * 2 + 1];
+    char escaped_password[password.length() * 2 + 1];
+    mysql_real_escape_string(conn, escaped_username, username.c_str(), username.length());
+    mysql_real_escape_string(conn, escaped_password, password.c_str(), password.length());
+
+    // 检查用户名是否已存在
+    std::string check_query = "SELECT * FROM user WHERE username = '" + std::string(escaped_username) + "'";
+    if (mysql_query(conn, check_query.c_str()) != 0) {
+        LOG_ERROR << "检查用户名查询失败: " << mysql_error(conn);
+        std::string body = "数据库错误!\n";
+        response->SetStatusCode(HttpStatusCode::k500InternalServerError);
+        response->SetStatusMessage("Internal Server Error");
+        response->SetBody(body);
+        response->SetContentType("text/plain");
+        response->SetContentLength(body.size());
+        return;
+    }
+
+    MYSQL_RES* result = mysql_store_result(conn);
+    std::string body;
+    if (result && mysql_num_rows(result) > 0) {
+        LOG_ERROR << "用户名已存在: " << username;
+        body = "用户名已存在!\n";
+        response->SetStatusCode(HttpStatusCode::k400BadRequest);
+        response->SetStatusMessage("Bad Request");
+    } else {
+        // 插入新用户
+        std::string insert_query = "INSERT INTO user (username, passwd) VALUES ('" + 
+                                  std::string(escaped_username) + "', '" + 
+                                  std::string(escaped_password) + "')";
+        if (mysql_query(conn, insert_query.c_str()) != 0) {
+            LOG_ERROR << "插入用户失败: " << mysql_error(conn);
+            body = "注册失败，数据库错误!\n";
+            response->SetStatusCode(HttpStatusCode::k500InternalServerError);
+            response->SetStatusMessage("Internal Server Error");
+        } else {
+            body = "注册成功!\n";
+            response->SetStatusCode(HttpStatusCode::k200K);
+            response->SetStatusMessage("OK");
+        }
+    }
+    mysql_free_result(result);
+
+    response->SetBody(body);
+    response->SetContentType("text/plain; charset=UTF-8");
+    response->SetContentLength(body.size());
+    response->AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->AddHeader("Pragma", "no-cache");
+    response->AddHeader("Expires", "0");
+}
 // 读取文件
 std::string ReadFile(const std::string& path){
     std::string complete_path = GetCurrentDir()+"/"+path;
@@ -234,16 +336,31 @@ void HttpResponseCallback(const HttpRequest &request, HttpResponse *response)
             // Extract the username and password substrings
             std::string username = rqbody.substr(usernamePos, usernameEndPos - usernamePos);
             std::string password = rqbody.substr(passwordPos, passwordEndPos - passwordPos);
+            // std::cout<<"username: "<<username<<" passwd: "<<password<<std::endl;
+            HandleLogin(username,password,response);
 
-            if (username == "wlgls"){
-                response->SetBody("login ok!\n");
+        }else if (url == "/register") {
+            std::string rqbody = request.body();
+            std::string::size_type usernamePos = rqbody.find("username=");
+            std::string::size_type passwordPos = rqbody.find("password=");
+            if (usernamePos == std::string::npos || passwordPos == std::string::npos) {
+                LOG_ERROR << "无效的注册表单数据";
+                std::string body = "无效的注册表单数据";
+                response->SetStatusCode(HttpStatusCode::k400BadRequest);
+                response->SetStatusMessage("Bad Request");
+                response->SetBody(body);
+                response->SetContentType("text/plain");
+                response->SetContentLength(body.size());
             }
-            else{
-                response->SetBody("error!\n");
-            }
-            response->SetStatusCode(HttpStatusCode::k200K);
-            response->SetStatusMessage("OK");
-            response->SetContentType("text/plain");
+            usernamePos += 9;
+            passwordPos += 9;
+            std::string::size_type usernameEndPos = rqbody.find('&', usernamePos);
+            std::string::size_type passwordEndPos = rqbody.length();
+            std::string username = rqbody.substr(usernamePos, usernameEndPos - usernamePos);
+            std::string password = rqbody.substr(passwordPos, passwordEndPos - passwordPos);
+            // std::cout << "注册用户: " << username << " 密码: " << password << std::endl;
+            HandleRegister(username, password, response);
+
         }else if(url == "/upload"){
             response->SetStatusCode(HttpStatusCode::k302K);
             response->SetStatusMessage("Moved Temporarily");
@@ -284,6 +401,13 @@ int main(int argc, char *argv[]){
     Logger::setFlush(AsyncFlushFunc);
 
     asynclog->Start();
+    //初始化数据库连接池
+    std::string user = "wangjz";
+    std::string passwd = "111111";
+    std::string database_name = "webdb";
+
+    MySQLConnectionPool& connection_pool = MySQLConnectionPool::getInstance();
+    connection_pool.init("localhost", user, passwd, database_name, 3306, 10);
 
     int size = std::thread::hardware_concurrency() - 1;
     std::cout<<"thread_nums: "<<size<<std::endl;

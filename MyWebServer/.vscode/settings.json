@@ -65,7 +65,10 @@
         "span": "cpp",
         "sstream": "cpp",
         "variant": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "queue": "cpp",
+        "list": "cpp",
+        "source_location": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
