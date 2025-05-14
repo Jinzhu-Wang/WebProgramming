@@ -24,13 +24,15 @@ do
 
     SUCCEED=$(echo "$OUTPUT" | grep "Requests:" | awk '{print $2}')
     FAILED=$(echo "$OUTPUT" | grep "Requests:" | awk '{print $4}')
-    REQ_PER_SEC=$(awk "BEGIN {printf \"%.2f\", $SUCCEED/$DURATION}")
 
     if [[ -z "$SUCCEED" ]]; then
         echo -e "$c\tERROR\tERROR" >> $OUTPUT_FILE
         echo "  ↳ Error or no response received."
         continue
     fi
+
+    REQ_PER_SEC=$(awk "BEGIN {printf \"%.2f\", $SUCCEED/$DURATION}")
+
 
     echo -e "$c\t$REQ_PER_SEC\t$FAILED" >> $OUTPUT_FILE
 done
